@@ -52,7 +52,21 @@ import PublicProfile from './src/components/PublicProfile';
 const GOOGLE_CLIENT_ID = "779781376861-biqrgahce5qi427un2o1go6m65l411h6.apps.googleusercontent.com";
 
 const App = () => {
+  const isSupabaseConfigured = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#000', color: '#fff', textAlign: 'center', padding: '20px' }}>
+        <h1 style={{ color: '#ff4444' }}>⚠️ Configuration Missing</h1>
+        <p>Your Supabase Environment Variables are not set up on Vercel.</p>
+        <p>Please add <b>VITE_SUPABASE_URL</b> and <b>VITE_SUPABASE_ANON_KEY</b> to your project settings.</p>
+        <button onClick={() => window.location.reload()} style={{ marginTop: '20px', padding: '10px 20px', backgroundColor: '#ff4444', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Retry</button>
+      </div>
+    );
+  }
+
   const [user, setUser] = useState<{ login: string, avatar_url: string, name?: string, email?: string } | null>(() => {
+
     if (typeof window !== 'undefined') {
       const savedUser = localStorage.getItem('googleUser');
       return savedUser ? JSON.parse(savedUser) : null;
