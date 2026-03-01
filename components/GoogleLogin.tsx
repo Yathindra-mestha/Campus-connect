@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -17,6 +17,7 @@ interface GoogleLoginProps {
 
 const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onLoginFailure }) => {
     const navigate = useNavigate();
+    const buttonId = `google-signin-button-${useId().replace(/:/g, '')}`;
 
 
     const decodeJWT = (token: string) => {
@@ -65,35 +66,41 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
                     cancel_on_tap_outside: true,
                 });
 
-                window.google.accounts.id.renderButton(
-                    document.getElementById('google-signin-button'),
-                    {
-                        theme: 'outline',
-                        size: 'large',
-                        shape: 'pill',
-                        width: 250
-                    }
-                );
+                const buttonElement = document.getElementById(buttonId);
+                if (buttonElement) {
+                    window.google.accounts.id.renderButton(
+                        buttonElement,
+                        {
+                            theme: 'outline',
+                            size: 'large',
+                            shape: 'pill',
+                            width: 250
+                        }
+                    );
+                }
             }
         };
 
         // Check if google script is loaded
+        let interval: ReturnType<typeof setInterval>;
         if (window.google && window.google.accounts) {
             initializeGoogleSignIn();
         } else {
-            const interval = setInterval(() => {
+            interval = setInterval(() => {
                 if (window.google && window.google.accounts) {
                     initializeGoogleSignIn();
                     clearInterval(interval);
                 }
             }, 100);
-            return () => clearInterval(interval);
         }
-    }, [clientId]);
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [clientId, buttonId]); // Added buttonId to dependencies
 
     return (
         <div className="flex flex-col items-center justify-center p-4">
-            <div id="google-signin-button"></div>
+            <div id={buttonId}></div>
         </div>
     );
 };
