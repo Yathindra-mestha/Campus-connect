@@ -19,12 +19,14 @@ interface ProjectsProps {
   autoOpenUploadProject?: boolean;
   onUploadProjectHandled?: () => void;
   addToast: (type: 'success' | 'error' | 'info', message: string) => void;
+  currentUser?: any;
 }
 
 const Projects: React.FC<ProjectsProps> = ({
   autoOpenUploadProject,
   onUploadProjectHandled,
-  addToast
+  addToast,
+  currentUser
 }) => {
   const [activeTab, setActiveTab] = useState('all');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -135,6 +137,7 @@ const Projects: React.FC<ProjectsProps> = ({
             fetchProjects();
           }}
           addToast={addToast}
+          currentUser={currentUser}
         />
 
         <Routes>

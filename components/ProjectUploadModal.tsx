@@ -10,9 +10,10 @@ interface ProjectUploadModalProps {
     project?: ProjectData;
     onSuccess?: () => void;
     addToast: (type: 'success' | 'error' | 'info', message: string) => void;
+    currentUser?: any;
 }
 
-const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose, project, onSuccess, addToast }) => {
+const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose, project, onSuccess, addToast, currentUser }) => {
     const isEditing = !!project;
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -47,9 +48,12 @@ const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose
         if (file) {
             setIsUploading(true);
             try {
-                // Since this is a static showcase demo without auth, 
-                // we'll just mock the image upload instead of breaking
-                addToast('info', 'Image upload disabled in guest mode.');
+                if (!currentUser) {
+                    addToast('info', 'Image upload disabled in guest mode.');
+                    return;
+                }
+                // Mock success for auth users since no backend
+                addToast('success', 'Image structure captured. Note: Real upload needs backend.');
             } catch (error: any) {
                 addToast('error', `Upload failed: ${error.message}`);
             } finally {
@@ -63,8 +67,15 @@ const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose
 
         setIsSaving(true);
         try {
-            // Simplified for demo since no auth is present
-            addToast('info', 'Project upload disabled in guest mode.');
+            if (!currentUser) {
+                addToast('info', 'Project upload disabled in guest mode.');
+                onSuccess?.();
+                onClose();
+                return;
+            }
+
+            // Allow project creation mock
+            addToast('success', 'Project created successfully! (Mocked since no backend)');
             onSuccess?.();
             onClose();
         } catch (error: any) {

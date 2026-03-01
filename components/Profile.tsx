@@ -44,8 +44,10 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, profileBackground }) => {
-    const isOwnProfile = false; // Disable own profile logic as we have no currentUser anymore
+    const isOwnProfile = currentUser?.login === targetUser?.login || (!targetUser?.login && !!currentUser);
     const displayUser = targetUser || currentUser;
+    const [isEditing, setIsEditing] = React.useState(false);
+
 
     // Initialize profile metadata state. Use null/empty during loading of another user's profile
     // to strictly prevent showing the logged-in user's bio temporarily.
@@ -96,15 +98,53 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                     const locMatch = content.match(/location:\s*"(.*)"/);
                     const coverMatch = content.match(/cover_url:\s*"(.*)"/);
 
+                    const localDataStr = localStorage.getItem(`profileDetails_${displayUser.login}`);
+                    let name = defaultData.name;
+                    let branch = defaultData.branch;
+                    let bio = defaultData.bio;
+                    let location = defaultData.location;
+
+                    if (nMatch) name = nMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+                    if (bMatch) branch = bMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+                    if (bioMatch) bio = bioMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+                    if (locMatch) location = locMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+
+                    // Allow local overrides
+                    if (localDataStr) {
+                        try {
+                            const localData = JSON.parse(localDataStr);
+                            if (localData.name) name = localData.name;
+                            if (localData.branch) branch = localData.branch;
+                            if (localData.bio) bio = localData.bio;
+                            if (localData.location) location = localData.location;
+                        } catch (e) {
+                            // parsing error, ignore
+                        }
+                    }
+
                     setProfileData({
-                        name: nMatch ? nMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n') : defaultData.name,
-                        branch: bMatch ? bMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n') : defaultData.branch,
-                        bio: bioMatch ? bioMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n') : defaultData.bio,
-                        location: locMatch ? locMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n') : defaultData.location,
+                        name,
+                        branch,
+                        bio,
+                        location,
                         cover_url: coverMatch ? coverMatch[1] : (displayUser as any).cover_url || ''
                     });
                 } else {
-                    setProfileData(defaultData);
+                    const localDataStr = localStorage.getItem(`profileDetails_${displayUser.login}`);
+                    if (localDataStr) {
+                        try {
+                            const localData = JSON.parse(localDataStr);
+                            setProfileData({
+                                name: localData.name || defaultData.name,
+                                branch: localData.branch || defaultData.branch,
+                                bio: localData.bio || defaultData.bio,
+                                location: localData.location || defaultData.location,
+                                cover_url: ''
+                            })
+                        } catch (e) { setProfileData(defaultData); }
+                    } else {
+                        setProfileData(defaultData);
+                    }
                 }
 
                 // Fetch rankings
@@ -115,7 +155,21 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                 }
             } catch (e) {
                 console.error('Failed to fetch profile/rankings', e);
-                setProfileData(defaultData);
+                const localDataStr = localStorage.getItem(`profileDetails_${displayUser.login}`);
+                if (localDataStr) {
+                    try {
+                        const localData = JSON.parse(localDataStr);
+                        setProfileData({
+                            name: localData.name || defaultData.name,
+                            branch: localData.branch || defaultData.branch,
+                            bio: localData.bio || defaultData.bio,
+                            location: localData.location || defaultData.location,
+                            cover_url: ''
+                        });
+                    } catch (e) { setProfileData(defaultData); }
+                } else {
+                    setProfileData(defaultData);
+                }
             }
         };
 
@@ -123,6 +177,14 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
     }, [displayUser?.login, currentUser?.login]);
 
     if (!displayUser) return null;
+
+    const handleSaveProfile = () => {
+        setIsEditing(false);
+        if (currentUser) {
+            localStorage.setItem(`profileDetails_${currentUser.login}`, JSON.stringify(profileData));
+            addToast('success', 'Profile updated successfully!');
+        }
+    };
 
     const stats = [
         { label: 'Projects', value: realStats?.projects || '0', icon: BookOpen, color: 'text-blue-500' },
@@ -184,12 +246,41 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
                         >
-                            <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-1">{profileData.name || displayUser.name || displayUser.login}</h1>
-                            <p className="text-indigo-600 dark:text-indigo-400 font-bold text-sm tracking-widest uppercase">{profileData.branch}</p>
+                            {isEditing ? (
+                                <div className="space-y-2 mt-2">
+                                    <input
+                                        type="text"
+                                        value={profileData.name}
+                                        onChange={e => setProfileData({ ...profileData, name: e.target.value })}
+                                        className="text-3xl font-black text-slate-900 dark:text-white bg-transparent border-b border-indigo-500 outline-none"
+                                        placeholder="Name"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={profileData.branch}
+                                        onChange={e => setProfileData({ ...profileData, branch: e.target.value })}
+                                        className="text-indigo-600 dark:text-indigo-400 font-bold text-sm tracking-widest uppercase bg-transparent border-b border-indigo-500 outline-none"
+                                        placeholder="Branch"
+                                    />
+                                </div>
+                            ) : (
+                                <>
+                                    <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-1">{profileData.name || displayUser.name || displayUser.login}</h1>
+                                    <p className="text-indigo-600 dark:text-indigo-400 font-bold text-sm tracking-widest uppercase">{profileData.branch}</p>
+                                </>
+                            )}
                         </motion.div>
                     </div>
 
                     <div className="flex gap-3 pb-2">
+                        {isOwnProfile && (
+                            <button
+                                onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
+                                className={`p-2.5 rounded-xl font-bold transition-all flex items-center gap-2 ${isEditing ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-indigo-600'}`}
+                            >
+                                {isEditing ? 'Save Profile' : <><Pencil className="w-5 h-5" /> Edit Profile</>}
+                            </button>
+                        )}
                         <button className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-indigo-600 transition-all">
                             <ExternalLink className="w-5 h-5" />
                         </button>
@@ -202,14 +293,34 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                 <div className="space-y-8">
                     <section className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">About</h3>
-                        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
-                            {profileData.bio || displayUser.bio || "Passionate about building scalable applications and contributing to open-source communities."}
-                        </p>
+                        {isEditing ? (
+                            <textarea
+                                className="w-full text-sm p-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white resize-none mb-6"
+                                rows={4}
+                                value={profileData.bio}
+                                onChange={e => setProfileData({ ...profileData, bio: e.target.value })}
+                                placeholder="Tell us about yourself..."
+                            />
+                        ) : (
+                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+                                {profileData.bio || displayUser.bio || "Passionate about building scalable applications and contributing to open-source communities."}
+                            </p>
+                        )}
 
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                                 <MapPin className="w-4 h-4 text-indigo-500" />
-                                <span>{profileData.location || displayUser?.location || "Remote / Global"}</span>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={profileData.location}
+                                        onChange={e => setProfileData({ ...profileData, location: e.target.value })}
+                                        className="bg-transparent border-b border-slate-300 dark:border-slate-700 outline-none flex-1"
+                                        placeholder="Location"
+                                    />
+                                ) : (
+                                    <span>{profileData.location || displayUser?.location || "Remote / Global"}</span>
+                                )}
                             </div>
                             <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                                 <LinkIcon className="w-4 h-4 text-indigo-500" />

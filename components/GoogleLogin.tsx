@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 
 // Declaration for google accounts id
 declare global {
@@ -14,6 +16,8 @@ interface GoogleLoginProps {
 }
 
 const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onLoginFailure }) => {
+    const navigate = useNavigate();
+
 
     const decodeJWT = (token: string) => {
         try {
@@ -45,6 +49,7 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
             };
             localStorage.setItem('googleUser', JSON.stringify(userInfo));
             onLoginSuccess(userInfo);
+            navigate('/profile');
         } else {
             if (onLoginFailure) onLoginFailure('Failed to decode user data');
         }

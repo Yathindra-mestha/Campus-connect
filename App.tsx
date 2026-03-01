@@ -260,6 +260,7 @@ const App = () => {
         <Route path="/events" element={<Events />} />
         <Route path="/projects/*" element={<Projects
           addToast={addToast}
+          currentUser={user}
         />} />
         <Route path="/leaderboard" element={<Leaderboard
           setActiveSection={(section) => { if (section !== 'profile') handleNavigate(section) }}
