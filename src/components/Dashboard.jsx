@@ -7,11 +7,34 @@ import StudentList from './StudentList';
 const Dashboard = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [userProfile, setUserProfile] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchStudents();
+        const getInitialData = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                fetchProfile(session.user.id);
+            }
+            fetchStudents();
+        };
+        getInitialData();
     }, []);
+
+    const fetchProfile = async (userId) => {
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('name')
+                .eq('id', userId)
+                .single();
+
+            if (error) throw error;
+            setUserProfile(data);
+        } catch (err) {
+            console.error('Error fetching profile:', err.message);
+        }
+    };
 
     const fetchStudents = async () => {
         setLoading(true);
@@ -46,7 +69,7 @@ const Dashboard = () => {
     return (
         <div className="dashboard-container">
             <header className="dashboard-header">
-                <h1>Campus Connect Dashboard</h1>
+                <h1>Welcome, {userProfile?.name || 'User'}</h1>
                 <button onClick={handleLogout} className="logout-btn">Logout</button>
             </header>
 

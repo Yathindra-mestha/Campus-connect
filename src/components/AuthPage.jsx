@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const AuthPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isSignUp, setIsSignUp] = useState(false);
@@ -17,12 +18,31 @@ const AuthPage = () => {
 
         try {
             if (isSignUp) {
-                const { error } = await supabase.auth.signUp({ email, password });
-                if (error) throw error;
-                alert('Check your email for the confirmation link!');
+                const { data, error: authError } = await supabase.auth.signUp({
+                    email,
+                    password
+                });
+
+                if (authError) throw authError;
+
+                if (data.user) {
+                    // Sync to users table
+                    const { error: profileError } = await supabase
+                        .from('users')
+                        .insert([{
+                            id: data.user.id,
+                            name,
+                            email
+                        }]);
+
+                    if (profileError) throw profileError;
+                }
+
+                alert('Signup successful! Please check your email for confirmation.');
+                setIsSignUp(false);
             } else {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
+                const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+                if (authError) throw authError;
                 navigate('/dashboard');
             }
         } catch (err) {
@@ -38,6 +58,18 @@ const AuthPage = () => {
                 <h1>Campus Connect</h1>
                 <h2>{isSignUp ? 'Create Account' : 'Welcome Back'}</h2>
                 <form onSubmit={handleAuth}>
+                    {isSignUp && (
+                        <div className="form-group">
+                            <label>Full Name</label>
+                            <input
+                                type="text"
+                                placeholder="Enter your name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                            />
+                        </div>
+                    )}
                     <div className="form-group">
                         <label>Email</label>
                         <input
