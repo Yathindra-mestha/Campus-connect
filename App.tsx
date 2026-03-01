@@ -45,20 +45,67 @@ import {
 import { githubService, ProjectData } from './utils/github';
 import Home from './components/Home';
 import GoogleLogin from './components/GoogleLogin';
+import { supabase } from './src/lib/supabaseClient';
+import MembersList from './components/MembersList';
+import PublicProfile from './components/PublicProfile';
 
 
 
 const GOOGLE_CLIENT_ID = "779781376861-biqrgahce5qi427un2o1go6m65l411h6.apps.googleusercontent.com";
 
 const App = () => {
-  const [user, setUser] = useState<{ login: string, avatar_url: string, name?: string, email?: string } | null>(() => {
-
+  const [user, setUser] = useState<{ login: string, avatar_url: string, name?: string, email?: string, id?: string } | null>(() => {
     if (typeof window !== 'undefined') {
       const savedUser = localStorage.getItem('googleUser');
       return savedUser ? JSON.parse(savedUser) : null;
     }
     return null;
   });
+
+  // Sync user profile from Supabase
+  const syncUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (data && !error) {
+        const updatedUser = {
+          ...user,
+          ...data,
+          login: data.id // Ensure we have a login/id
+        };
+        setUser(updatedUser);
+        localStorage.setItem('googleUser', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+      console.error('Error syncing profile:', err);
+    }
+  };
+
+  useEffect(() => {
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        syncUserProfile(session.user.id);
+      }
+    };
+
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        syncUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        localStorage.removeItem('googleUser');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -299,7 +346,9 @@ const App = () => {
             setProfileBackground={setProfileBackground}
           />
         } />
-        <Route path="/dashboard" element={<Dashboard user={user} handleNavigate={handleNavigate} />} />
+        <Route path="/dashboard" element={<Dashboard user={user} handleNavigate={handleNavigate} onProfileUpdate={() => user?.id && syncUserProfile(user.id)} />} />
+        <Route path="/members" element={<MembersList />} />
+        <Route path="/profile/:id" element={<PublicProfile />} />
       </Routes>
     );
   };
