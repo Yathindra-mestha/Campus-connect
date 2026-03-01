@@ -6,6 +6,7 @@ const AuthPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
+    const [branch, setBranch] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isSignUp, setIsSignUp] = useState(false);
@@ -32,7 +33,8 @@ const AuthPage = () => {
                         .insert([{
                             id: data.user.id,
                             name,
-                            email
+                            email,
+                            branch
                         }]);
 
                     if (profileError) throw profileError;
@@ -59,16 +61,28 @@ const AuthPage = () => {
                 <h2>{isSignUp ? 'Create Account' : 'Welcome Back'}</h2>
                 <form onSubmit={handleAuth}>
                     {isSignUp && (
-                        <div className="form-group">
-                            <label>Full Name</label>
-                            <input
-                                type="text"
-                                placeholder="Enter your name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                required
-                            />
-                        </div>
+                        <>
+                            <div className="form-group">
+                                <label>Full Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter your name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Branch / Department</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter your branch (e.g. CS, ME)"
+                                    value={branch}
+                                    onChange={(e) => setBranch(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        </>
                     )}
                     <div className="form-group">
                         <label>Email</label>

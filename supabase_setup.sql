@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT NULL,
   email TEXT NOT NULL,
   avatar_url TEXT NULL,
+  branch TEXT NULL,
+  social_links JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

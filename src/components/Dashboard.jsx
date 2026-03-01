@@ -25,7 +25,7 @@ const Dashboard = () => {
         try {
             const { data, error } = await supabase
                 .from('users')
-                .select('name')
+                .select('name, branch, social_links, avatar_url')
                 .eq('id', userId)
                 .single();
 
@@ -73,6 +73,29 @@ const Dashboard = () => {
                 <button onClick={handleLogout} className="logout-btn">Logout</button>
             </header>
 
+            <section className="profile-info">
+                <div className="profile-card">
+                    <div className="profile-header">
+                        {userProfile?.avatar_url && <img src={userProfile.avatar_url} alt="Profile" className="avatar" />}
+                        <div>
+                            <h2>{userProfile?.name}</h2>
+                            <p className="branch-text">{userProfile?.branch || 'No branch specified'}</p>
+                        </div>
+                    </div>
+                    <div className="social-links">
+                        {userProfile?.social_links?.linkedin && (
+                            <a href={userProfile.social_links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+                        )}
+                        {userProfile?.social_links?.github && (
+                            <a href={userProfile.social_links.github} target="_blank" rel="noreferrer">GitHub</a>
+                        )}
+                        {userProfile?.social_links?.instagram && (
+                            <a href={userProfile.social_links.instagram} target="_blank" rel="noreferrer">Instagram</a>
+                        )}
+                    </div>
+                </div>
+            </section>
+
             <main className="dashboard-main">
                 <StudentForm onStudentAdded={onStudentAdded} />
                 <section className="student-section">
@@ -112,6 +135,27 @@ const Dashboard = () => {
         }
         .logout-btn:hover { background: #cbd5e0; }
         .dashboard-main { display: flex; flex-direction: column; }
+        .profile-info { margin-bottom: 2rem; }
+        .profile-card {
+          background: white;
+          padding: 1.5rem;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .profile-header { display: flex; align-items: center; gap: 1rem; }
+        .avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+        .branch-text { color: #718096; font-size: 0.9rem; }
+        .social-links { display: flex; gap: 1rem; }
+        .social-links a {
+          color: #667eea;
+          text-decoration: none;
+          font-size: 0.9rem;
+          font-weight: 500;
+        }
+        .social-links a:hover { text-decoration: underline; }
       `}</style>
         </div>
     );
