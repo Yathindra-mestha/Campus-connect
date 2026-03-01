@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import StudentForm from './StudentForm';
 import StudentList from './StudentList';
 
@@ -70,7 +70,10 @@ const Dashboard = () => {
         <div className="dashboard-container">
             <header className="dashboard-header">
                 <h1>Welcome, {userProfile?.name || 'User'}</h1>
-                <button onClick={handleLogout} className="logout-btn">Logout</button>
+                <div className="header-actions">
+                    <Link to="/members" className="members-btn">Members Directory</Link>
+                    <button onClick={handleLogout} className="logout-btn">Logout</button>
+                </div>
             </header>
 
             <section className="profile-info">
@@ -123,6 +126,14 @@ const Dashboard = () => {
           padding-bottom: 1rem;
           border-bottom: 2px solid #edf2f7;
         }
+        .header-actions { display: flex; gap: 1rem; align-items: center; }
+        .members-btn {
+          color: #667eea;
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 0.9rem;
+        }
+        .members-btn:hover { text-decoration: underline; }
         h1 { color: #2d3748; font-size: 1.5rem; }
         h2 { color: #4a5568; margin-bottom: 1rem; }
         .logout-btn {
