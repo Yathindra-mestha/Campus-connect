@@ -197,7 +197,7 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
             {/* Profile Header */}
             <div className="relative mb-12">
                 {/* Cover Pattern or Image */}
-                <div className={`h-48 w-full rounded-3xl border transition-all duration-500 overflow-hidden relative group ${profileBackground === 'landscape' ? 'bg-gradient-to-br from-emerald-400 via-teal-500 to-indigo-600 border-none' : 'bg-indigo-600/10 dark:bg-indigo-500/5 border-indigo-100 dark:border-white/5'}`}>
+                <div className={`h-48 md:h-64 lg:h-80 w-full rounded-3xl border transition-all duration-500 overflow-hidden relative group ${profileBackground === 'landscape' ? 'bg-gradient-to-br from-emerald-400 via-teal-500 to-indigo-600 border-none' : 'bg-indigo-600/10 dark:bg-indigo-500/5 border-indigo-100 dark:border-white/5'}`}>
                     {profileBackground === 'landscape' && !profileData.cover_url && (
                         <div className="absolute inset-0 opacity-40">
                             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center mix-blend-overlay"></div>
@@ -208,7 +208,7 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                         <img
                             src={optimizeImage(profileData.cover_url, { width: 1200, quality: 85 })}
                             alt="Cover"
-                            className="w-full h-[32rem] object-cover transition-transform duration-700 group-hover:scale-105"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             loading="lazy"
                             decoding="async"
                         />
@@ -223,11 +223,11 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                 </div>
 
                 {/* User Info Avatar Row */}
-                <div className="flex flex-col md:flex-row items-end gap-6 -mt-20 px-8 relative z-10">
+                <div className="flex flex-col md:flex-row items-center md:items-end gap-6 -mt-16 md:-mt-20 px-4 sm:px-8 relative z-10">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="w-40 h-40 rounded-full p-2 bg-white dark:bg-zinc-900 shadow-2xl relative group shrink-0"
+                        className="w-32 h-32 md:w-40 md:h-40 rounded-full p-1 md:p-2 bg-white dark:bg-zinc-900 shadow-2xl relative group shrink-0"
                     >
                         <div className="w-full h-full rounded-full overflow-hidden border-4 border-white dark:border-zinc-900 shadow-inner relative">
                             <img
@@ -240,39 +240,39 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                         </div>
                     </motion.div>
 
-                    <div className="flex-1 pb-2">
+                    <div className="flex-1 pb-2 text-center md:text-left w-full">
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
                         >
                             {isEditing ? (
-                                <div className="space-y-2 mt-2">
+                                <div className="space-y-2 mt-2 w-full max-w-sm mx-auto md:mx-0">
                                     <input
                                         type="text"
                                         value={profileData.name}
                                         onChange={e => setProfileData({ ...profileData, name: e.target.value })}
-                                        className="text-3xl font-black text-slate-900 dark:text-white bg-transparent border-b border-indigo-500 outline-none"
+                                        className="w-full text-center md:text-left text-2xl md:text-3xl font-black text-slate-900 dark:text-white bg-transparent border-b border-indigo-500 outline-none"
                                         placeholder="Name"
                                     />
                                     <input
                                         type="text"
                                         value={profileData.branch}
                                         onChange={e => setProfileData({ ...profileData, branch: e.target.value })}
-                                        className="text-indigo-600 dark:text-indigo-400 font-bold text-sm tracking-widest uppercase bg-transparent border-b border-indigo-500 outline-none"
+                                        className="w-full text-center md:text-left text-indigo-600 dark:text-indigo-400 font-bold text-xs md:text-sm tracking-widest uppercase bg-transparent border-b border-indigo-500 outline-none"
                                         placeholder="Branch"
                                     />
                                 </div>
                             ) : (
                                 <>
-                                    <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-1">{profileData.name || displayUser.name || displayUser.login}</h1>
-                                    <p className="text-indigo-600 dark:text-indigo-400 font-bold text-sm tracking-widest uppercase">{profileData.branch}</p>
+                                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-1">{profileData.name || displayUser.name || displayUser.login}</h1>
+                                    <p className="text-indigo-600 dark:text-indigo-400 font-bold text-xs md:text-sm tracking-widest uppercase">{profileData.branch}</p>
                                 </>
                             )}
                         </motion.div>
                     </div>
 
-                    <div className="flex gap-3 pb-2">
+                    <div className="flex justify-center md:justify-start gap-3 pb-2 w-full md:w-auto mt-4 md:mt-0">
                         {isOwnProfile && (
                             <button
                                 onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
