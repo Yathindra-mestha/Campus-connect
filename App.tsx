@@ -44,6 +44,8 @@ import {
 import { githubService, ProjectData } from './utils/github';
 import Home from './components/Home';
 import GoogleLogin from './components/GoogleLogin';
+import MembersList from './src/components/MembersList';
+import PublicProfile from './src/components/PublicProfile';
 
 const GOOGLE_CLIENT_ID = "779781376861-biqrgahce5qi427un2o1go6m65l411h6.apps.googleusercontent.com";
 
@@ -296,6 +298,8 @@ const App = () => {
           />
         } />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/members" element={<MembersList />} />
+        <Route path="/profile/:id" element={<PublicProfile />} />
       </Routes>
     );
   };
