@@ -33,7 +33,8 @@ import About from './components/About';
 import Profile from './components/Profile';
 import Settings from './components/Settings';
 import SearchOverlay from './components/SearchOverlay';
-import Dashboard from './components/Dashboard';
+import Dashboard from './src/components/Dashboard';
+
 import {
   LogOut,
   Settings as SettingsIcon,
@@ -46,6 +47,7 @@ import Home from './components/Home';
 import GoogleLogin from './components/GoogleLogin';
 import MembersList from './src/components/MembersList';
 import PublicProfile from './src/components/PublicProfile';
+
 
 const GOOGLE_CLIENT_ID = "779781376861-biqrgahce5qi427un2o1go6m65l411h6.apps.googleusercontent.com";
 
