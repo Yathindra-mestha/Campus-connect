@@ -1,0 +1,2 @@
+C:\$Recycle.Bin\S-1-5-21-2439828134-3757772473-1032572579-1001\$R9IJH54\mingit\cmd\git.exe
+C:\$Recycle.Bin\S-1-5-21-2439828134-3757772473-1032572579-1001\$R9IJH54\mingit\mingw64\bin\git.exe

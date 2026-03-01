@@ -1,0 +1,54 @@
+[
+  {
+    "login": "Yathindra-mestha",
+    "name": "Yathindra",
+    "branch": "Senior Innovator • CSE",
+    "bio": "",
+    "projectCount": 2,
+    "profileCompleteness": 2,
+    "last_active_at": "2026-03-01T12:29:55.376Z",
+    "avatar_url": "https://github.com/Yathindra-mestha.png",
+    "points": 2500,
+    "trend": "same",
+    "rank": 1
+  },
+  {
+    "login": "Vinayakahr10",
+    "name": "Vinayakahr10",
+    "branch": "General",
+    "bio": "",
+    "projectCount": 2,
+    "profileCompleteness": 0,
+    "last_active_at": "",
+    "avatar_url": "https://github.com/Vinayakahr10.png",
+    "points": 2000,
+    "trend": "same",
+    "rank": 2
+  },
+  {
+    "login": "Jeeshan-jxeexu",
+    "name": "Jeeshan D silva",
+    "branch": "Senior Innovator • CSE",
+    "bio": "",
+    "projectCount": 0,
+    "profileCompleteness": 2,
+    "last_active_at": "2026-02-27T10:00:44.287Z",
+    "avatar_url": "https://github.com/Jeeshan-jxeexu.png",
+    "points": 1500,
+    "trend": "same",
+    "rank": 3
+  },
+  {
+    "login": "srujanem",
+    "name": "srujanem",
+    "branch": "Senior Innovator • CSE",
+    "bio": "",
+    "projectCount": 0,
+    "profileCompleteness": 1,
+    "last_active_at": "2026-02-28T16:02:57.511Z",
+    "avatar_url": "https://github.com/srujanem.png",
+    "points": 1250,
+    "trend": "same",
+    "rank": 4
+  }
+]

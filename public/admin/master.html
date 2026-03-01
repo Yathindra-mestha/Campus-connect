@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Content Manager - Admin View</title>
+</head>
+
+<body>
+    <script>window.CMS_MANUAL_INIT = true;</script>
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <script>
+        const token = localStorage.getItem('github_token');
+
+        if (!token) {
+            window.location.href = '/';
+        } else {
+            // Fetch user info for pre-authentication
+            fetch('https://api.github.com/user', {
+                headers: { Authorization: `token ${token}` }
+            })
+                .then(res => res.json())
+                .then(user => {
+                    if (!user.login) throw new Error('Invalid user');
+
+                    // Pre-authenticate Decap CMS
+                    localStorage.setItem('decap-cms-user', JSON.stringify({
+                        backendName: 'github',
+                        token: token,
+                        login: user.login,
+                        avatar_url: user.avatar_url
+                    }));
+
+                    CMS.init({
+                        config: {
+                            backend: {
+                                name: 'github',
+                                repo: 'Yathindra-mestha/Campus_connect',
+                                branch: 'main'
+                            },
+                            media_folder: "public/images/students",
+                            public_folder: "/images/students",
+                            collections: [
+                                {
+                                    name: 'all-students',
+                                    label: 'All Students',
+                                    folder: 'src/content/students',
+                                    create: true,
+                                    slug: '{{slug}}/index',
+                                    fields: [
+                                        { label: 'Name', name: 'name', widget: 'string' },
+                                        { label: 'Branch', name: 'branch', widget: 'string' },
+                                        { label: 'Bio', name: 'bio', widget: 'text' },
+                                        { label: 'Avatar', name: 'avatar', widget: 'image' }
+                                    ]
+                                }
+                            ]
+                        }
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Authentication failed. Please log in again.');
+                    window.location.href = '/';
+                });
+        }
+    </script>
+</body>
+
+</html>

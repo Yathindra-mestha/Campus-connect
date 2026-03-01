@@ -1,0 +1,76 @@
+[
+  {
+    "id": "Vinayakahr10-campus-pioneer-smart-plant-monitor-v2.md",
+    "slug": "campus-pioneer-smart-plant-monitor-v2",
+    "author_login": "Vinayakahr10",
+    "author": "Vinayakahr10",
+    "title": "Campus Pioneer: Smart Plant Monitor v2",
+    "description": "A comprehensive IoT solution for monitoring plant health on campus, featuring atmospheric data logging and automated irrigation alerts.",
+    "tags": [
+      "ESP32",
+      "IoT",
+      "Web Server",
+      "Sensors",
+      "DHT22"
+    ],
+    "image": "/images/students/Vinayakahr10/pioneer-system.png",
+    "github_url": "https://github.com/Vinayakahr10/campus-pioneer",
+    "branch": "ECE",
+    "date": "2026-02-26T17:49:49.365Z",
+    "body": ""
+  },
+  {
+    "id": "Vinayakahr10-nexus-ai.md",
+    "slug": "nexus-ai",
+    "author_login": "Vinayakahr10",
+    "author": "Vinayakahr10",
+    "title": "Nexus AI: Neural Network Visualizer",
+    "description": "A state-of-the-art neural network visualization tool that helps students understand deep learning architectures through interactive 3D graphs and real-time training feedback.",
+    "tags": [
+      "AI",
+      "Machine Learning",
+      "Three.js",
+      "React"
+    ],
+    "image": "/images/students/Vinayakahr10/nexus-ai.png",
+    "github_url": "https://github.com/Vinayakahr10/nexus-ai",
+    "branch": "CSE",
+    "date": "2026-02-26T21:30:00.000Z",
+    "body": "# Nexus AI: Exploring the Neural Frontier\r\n\r\nWelcome to the future of AI education. Nexus AI is built to bridge the gap between abstract mathematical models and intuitive understanding.\r\n\r\n## 🚀 Key Features\r\n- **Real-time 3D Rendering**: Watch neurons fire as training data passes through the network.\r\n- **Dynamic Architecture**: Build your own models using a drag-and-drop interface.\r\n- **Live Training Statistics**: Monitor loss and accuracy curves in high definition.\r\n\r\n## 🛠️ How it Works (Tutorial)\r\n\r\n### 1. Setting Up Your First Network\r\nTo begin, click the \"+\" button in the architecture panel. You can add:\r\n- `Input Layers` (Automatic shape detection)\r\n- `Hidden Layers` (Select activation: ReLU, Tanh, Sigmoid)\r\n- `Output Layers` (Softmax or Linear)\r\n\r\n### 2. Importing Data\r\nNexus AI supports `.json` and `.csv` datasets. Simply drag your file into the viewport to begin preprocessing.\r\n\r\n### 3. Visualizing Weights\r\nHover over any connection to see the current weight value. A **thick, solid line** represents a high positive weight, while a **dashed red line** indicates a negative weight.\r\n\r\n```javascript\r\n// Sample configuration for a simple XOR network\r\nconst model = new Nexus.Model({\r\n  layers: [2, 4, 1],\r\n  activation: 'relu',\r\n  optimizer: 'adam'\r\n});\r\n\r\nmodel.train(data);\r\n```\r\n\r\n## 📈 Future Roadmap\r\n- Integration with PyTorch and TensorFlow exports.\r\n- Collaborative training sessions via WebRTC.\r\n- VR mode for immersive structure analysis."
+  },
+  {
+    "id": "Yathindra-mestha-eco-track.md",
+    "slug": "eco-track",
+    "author_login": "Yathindra-mestha",
+    "author": "Yathindra",
+    "title": "EcoTrack: Sustainability Monitor",
+    "description": "An IoT-powered dashboard that tracks campus energy consumption and waste management in real-time, providing actionable insights for a greener university.",
+    "tags": [
+      "IoT",
+      "Sustainability",
+      "Data Vision",
+      "Node.js"
+    ],
+    "image": "/images/students/Yathindra-mestha/eco-track.png",
+    "github_url": "https://github.com/Yathindra-mestha/eco-track",
+    "branch": "Environmental Engineering",
+    "date": "2026-02-26T21:35:00.000Z",
+    "body": "# EcoTrack: Saving the Planet, One Data Point at a Time\r\n\r\nEcoTrack is more than just a dashboard; it's a call to action for every student on campus to participate in our sustainability goals.\r\n\r\n## 🌿 Technical Overview\r\nOur system utilizes a mesh network of ESP32 sensors placed in every building to monitor:\r\n- **Electricity Usage** (Amperage & Voltage)\r\n- **Water Flow** (Identifying leaks in real-time)\r\n- **Waste Bin Status** (Optimizing collection routes)\r\n\r\n## 📖 Deployment Guide\r\n\r\n### Hardware Requirements\r\n- ESP32 Microcontroller\r\n- SCT-013 Current Sensor\r\n- HC-SR04 Ultrasonic Sensor (for bin levels)\r\n\r\n### Software Setup\r\n1. Clone the repository and install dependencies.\r\n2. Configure your `config.env` with your MQTT broker credentials.\r\n3. Pulse your sensors to the gateway.\r\n\r\n```bash\r\n# Start the EcoTrack local gateway\r\nnpm install\r\nnpm run start:gateway\r\n```\r\n\r\n## 🏆 Project Impact\r\nSince its deployment in the Main Campus Hall, we have seen a **12% reduction** in idle energy waste and identified **3 major water leaks** within the first week.\r\n\r\n---\r\n\r\n*Join our mission to create a carbon-neutral campus by 2030.*"
+  },
+  {
+    "id": "Yathindra-mestha-q.md",
+    "slug": "q",
+    "author_login": "Yathindra-mestha",
+    "author": "Yathindra",
+    "title": "q",
+    "description": "q\n",
+    "tags": [
+      "q"
+    ],
+    "image": "",
+    "github_url": "",
+    "branch": "CSE",
+    "date": "2026-03-01T10:58:54.198Z",
+    "body": ""
+  }
+]

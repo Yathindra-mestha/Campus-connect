@@ -1,0 +1,28 @@
+backend:
+  name: github
+  repo: Yathindra-mestha/Campus_connect # Adjust mapping to the correct repo owner/name
+  branch: main
+
+# These settings map where media is uploaded in the repository and how it's referenced in the content
+media_folder: "public/images/projects"
+public_folder: "/images/projects"
+
+# Collections define the structure of the different content types
+collections:
+  - name: "projects"
+    label: "Projects"
+    folder: "src/content/students/Vinayakahr10/projects" # Initially scoped to one student for structure mapping
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Draft", name: "draft", widget: "boolean", default: false, required: false }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Description", name: "description", widget: "text" }
+      - { label: "Image", name: "image", widget: "image", required: false }
+      - { label: "Demo URL", name: "demo_url", widget: "string", required: false }
+      - { label: "Repo URL", name: "github_url", widget: "string", required: false }
+      - { label: "Featured", name: "featured", widget: "boolean", default: false, required: false }
+      - { label: "Category / Branch", name: "branch", widget: "select", options: ["CSE", "ECE", "Mechanical", "Civil", "AI/ML", "General"] }
+      - { label: "Tags", name: "tags", widget: "list", default: [] }
+      - { label: "Body", name: "body", widget: "markdown" }
