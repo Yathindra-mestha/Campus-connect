@@ -26,3 +26,21 @@ collections:
       - { label: "Category / Branch", name: "branch", widget: "select", options: ["CSE", "ECE", "Mechanical", "Civil", "AI/ML", "General"] }
       - { label: "Tags", name: "tags", widget: "list", default: [] }
       - { label: "Body", name: "body", widget: "markdown" }
+
+  - name: "events"
+    label: "Events"
+    folder: "src/content/events"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "string", hint: "e.g. March 15-17, 2026" }
+      - { label: "Time", name: "time", widget: "string", hint: "e.g. 9:00 AM - 5:00 PM or Completed" }
+      - { label: "Location", name: "location", widget: "string" }
+      - { label: "Category", name: "category", widget: "string", hint: "e.g. Hackathon, Workshop" }
+      - { label: "Current Participants", name: "participants", widget: "number", default: 0 }
+      - { label: "Max Participants", name: "maxParticipants", widget: "number", default: 100 }
+      - { label: "Cover Image", name: "image", widget: "image", required: true }
+      - { label: "Short Description", name: "description", widget: "text" }
+      - { label: "Winners (Optional)", name: "winners", widget: "list", required: false, hint: "List of winner names or teams if completed" }
+      - { label: "Full Details", name: "body", widget: "markdown", required: false }

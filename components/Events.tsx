@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, Users, ExternalLink, Filter, Search, Plus, Trophy, Clock, X, Info } from 'lucide-react';
 import { optimizeImage } from '../utils/imageOptimization';
+import { githubService } from '../utils/github';
 
 interface EventData {
   id: number;
@@ -17,86 +18,38 @@ interface EventData {
 }
 
 const Events = () => {
-  const upcomingEvents: EventData[] = [
-    {
-      id: 1,
-      title: 'Annual Tech Hackathon 2026',
-      date: 'March 15-17, 2026',
-      time: '9:00 AM - 5:00 PM',
-      location: 'Main Auditorium',
-      category: 'Hackathon',
-      participants: 120,
-      maxParticipants: 200,
-      image: 'https://picsum.photos/seed/hackathon/800/400',
-      description: 'Join us for 48 hours of intense coding, building, and innovation. Prizes worth $5000 up for grabs!'
-    },
-    {
-      id: 2,
-      title: 'AI & Machine Learning Workshop',
-      date: 'March 22, 2026',
-      time: '2:00 PM - 5:00 PM',
-      location: 'Lab 3, CS Block',
-      category: 'Workshop',
-      participants: 45,
-      maxParticipants: 50,
-      image: 'https://picsum.photos/seed/aiworkshop/800/400',
-      description: 'A hands-on workshop covering the basics of neural networks and deep learning using PyTorch.'
-    },
-    {
-      id: 3,
-      title: 'Civil Engineering Guest Lecture',
-      date: 'April 5, 2026',
-      time: '10:00 AM - 12:00 PM',
-      location: 'Seminar Hall A',
-      category: 'Lecture',
-      participants: 80,
-      maxParticipants: 150,
-      image: 'https://picsum.photos/seed/civillecture/800/400',
-      description: 'Guest lecture by Dr. Alan Smith on sustainable urban development and smart cities.'
-    }
-  ];
+  const [upcomingEvents, setUpcomingEvents] = useState<EventData[]>([]);
+  const [pastEvents, setPastEvents] = useState<EventData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const pastEvents: EventData[] = [
-    {
-      id: 4,
-      title: 'Robotics Championship 2025',
-      date: 'November 10-12, 2025',
-      time: 'Completed',
-      location: 'Sports Complex',
-      category: 'Competition',
-      participants: 150,
-      maxParticipants: 150,
-      image: 'https://picsum.photos/seed/robotics/800/400',
-      description: 'The annual robotics showdown featuring line followers, maze solvers, and robo-soccer.',
-      winners: ['Team Alpha (CSE)', 'RoboKnights (Mech)', 'CircuitBreakers (ECE)']
-    },
-    {
-      id: 5,
-      title: 'Web3 & Blockchain Summit',
-      date: 'October 25, 2025',
-      time: 'Completed',
-      location: 'Main Auditorium',
-      category: 'Conference',
-      participants: 300,
-      maxParticipants: 300,
-      image: 'https://picsum.photos/seed/web3/800/400',
-      description: 'A full-day summit exploring the future of decentralized applications and smart contracts.',
-      winners: null
-    },
-    {
-      id: 6,
-      title: 'Design Thinking Bootcamp',
-      date: 'September 15, 2025',
-      time: 'Completed',
-      location: 'Design Studio',
-      category: 'Workshop',
-      participants: 60,
-      maxParticipants: 60,
-      image: 'https://picsum.photos/seed/design/800/400',
-      description: 'Intensive bootcamp on user-centered design, prototyping, and usability testing.',
-      winners: null
-    }
-  ];
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const events = await githubService.getEvents();
+
+        // Simple filter based on "Completed" keyword in 'time', or basic date parsing
+        const upcoming = events.filter((e: any) => e.time && !e.time.toLowerCase().includes('completed'));
+        const past = events.filter((e: any) => e.time && e.time.toLowerCase().includes('completed'));
+
+        setUpcomingEvents(upcoming);
+        setPastEvents(past);
+      } catch (error) {
+        console.error("Failed to load events", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

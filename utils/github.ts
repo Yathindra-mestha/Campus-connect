@@ -35,6 +35,17 @@ export const githubService = {
         }
     },
 
+    async getEvents(): Promise<any[]> {
+        try {
+            const res = await fetch('/data/events.json');
+            if (!res.ok) throw new Error('Failed to fetch events data');
+            return await res.json();
+        } catch (error) {
+            console.error('Error fetching events:', error);
+            return [];
+        }
+    },
+
     async getSystemStats() {
         try {
             const res = await fetch('/data/stats.json');

@@ -6,6 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const STUDENTS_DIR = path.join(__dirname, '../src/content/students');
+const EVENTS_DIR = path.join(__dirname, '../src/content/events');
 const PUBLIC_DATA_DIR = path.join(__dirname, '../public/data');
 
 // Simple frontmatter parser
@@ -16,7 +17,7 @@ function parseFrontmatter(content) {
     const fm = match[1];
     const result = {};
 
-    const fields = ['title', 'description', 'tags', 'image', 'github_url', 'branch', 'date', 'name', 'bio', 'location', 'cover_url', 'avatar_url', 'last_active_at'];
+    const fields = ['title', 'description', 'tags', 'image', 'github_url', 'branch', 'date', 'time', 'location', 'category', 'participants', 'maxParticipants', 'winners', 'name', 'bio', 'cover_url', 'avatar_url', 'last_active_at'];
 
     fields.forEach(field => {
         // Regex to match: field: "value" or field: ["value1", "value2"]
@@ -137,9 +138,34 @@ async function generateData() {
         const stats = {
             students: 2500 + leaderData.length,
             projects: 450 + totalProjects,
-            events: 120,
+            events: 120, // Now dynamic below? Let's leave as standard or let's update it in a separate PR
             contributors: 850 + leaderData.length
         };
+
+        // Parse Events Data
+        const allEvents = [];
+        try {
+            const eventsDirFiles = await fs.readdir(EVENTS_DIR);
+            for (const eventFile of eventsDirFiles) {
+                if (!eventFile.endsWith('.md')) continue;
+
+                const filePath = path.join(EVENTS_DIR, eventFile);
+                const eventContent = await fs.readFile(filePath, 'utf-8');
+                const parsedEvent = parseFrontmatter(eventContent);
+
+                if (parsedEvent && parsedEvent.data) {
+                    allEvents.push({
+                        id: eventFile.replace('.md', ''),
+                        ...parsedEvent.data,
+                        body: parsedEvent.body
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('No events directory found or error reading events', e);
+        }
+
+        stats.events = allEvents.length;
 
         // Write Files
         await fs.writeFile(
@@ -157,7 +183,12 @@ async function generateData() {
             JSON.stringify(stats, null, 2)
         );
 
-        console.log(`✅ Successfully generated data for ${allProjects.length} projects and ${leaderData.length} students.`);
+        await fs.writeFile(
+            path.join(PUBLIC_DATA_DIR, 'events.json'),
+            JSON.stringify(allEvents, null, 2)
+        );
+
+        console.log(`✅ Successfully generated data for ${allProjects.length} projects, ${allEvents.length} events, and ${leaderData.length} students.`);
 
     } catch (err) {
         console.error('Failed to generate build data:', err);

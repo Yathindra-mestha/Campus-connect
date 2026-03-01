@@ -1,0 +1,30 @@
+[
+  {
+    "id": "2025-11-10-robotics-championship",
+    "title": "Robotics Championship 2025",
+    "description": "The annual robotics showdown featuring line followers, maze solvers, and robo-soccer.",
+    "image": "https://picsum.photos/seed/robotics/800/400",
+    "date": "November 10-12, 2025",
+    "time": "Completed",
+    "location": "Sports Complex",
+    "category": "Competition",
+    "participants": 150,
+    "maxParticipants": 150,
+    "winners": "- \"Team Alpha (CSE)",
+    "body": "The biggest robotics showdown of the year has concluded! Thank you to all the amazing teams who participated.\r\n\r\n## Featured Events\r\n- Line Follower challenge\r\n- Autonomous Maze Solving\r\n- Robo-Soccer Tournament"
+  },
+  {
+    "id": "2026-03-15-tech-hackathon",
+    "title": "Annual Tech Hackathon 2026",
+    "description": "Join us for 48 hours of intense coding, building, and innovation. Prizes worth $5000 up for grabs!",
+    "image": "https://picsum.photos/seed/hackathon/800/400",
+    "date": "March 15-17, 2026",
+    "time": "9:00 AM - 5:00 PM",
+    "location": "Main Auditorium",
+    "category": "Hackathon",
+    "participants": 120,
+    "maxParticipants": 200,
+    "winners": [],
+    "body": "Welcome to the **Annual Tech Hackathon 2026**! Gather your team of up to 4 members to build the next big thing.\r\n\r\n## Theme\r\n- EdTech & E-Learning\r\n- Sustainability\r\n- Open Innovation\r\n\r\n## Schedule\r\n**Day 1**\r\n- 9:00 AM: Registration & Opening Ceremony\r\n- 10:00 AM: Hacking Begins\r\n\r\n*More details to be announced soon.*"
+  }
+]
