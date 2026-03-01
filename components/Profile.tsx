@@ -1,5 +1,6 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import GoogleLogin from './GoogleLogin';
 import {
     Github,
     Linkedin,
@@ -41,9 +42,11 @@ interface ProfileProps {
     } | null;
     addToast: (type: 'success' | 'error' | 'info', message: string) => void;
     profileBackground: 'default' | 'landscape';
+    onLoginSuccess?: (userData: any) => void;
+    onLogout?: () => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, profileBackground }) => {
+const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, profileBackground, onLoginSuccess, onLogout }) => {
     const isOwnProfile = currentUser?.login === targetUser?.login || (!targetUser?.login && !!currentUser);
     const displayUser = targetUser || currentUser;
     const [isEditing, setIsEditing] = React.useState(false);
@@ -175,6 +178,31 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
 
         fetchData();
     }, [displayUser?.login, currentUser?.login]);
+
+    if (!displayUser && onLoginSuccess) {
+        // Instagram-style clean login screen for guests
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[70vh] px-4">
+                <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-3xl p-8 max-w-sm w-full text-center shadow-xl">
+                    <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Camera className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Your Profile</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                        Log in to see your projects, customize your profile, and connect with the CampusConnect community.
+                    </p>
+
+                    {/* Reusing existing GoogleLogin component we moved from the header */}
+                    <div className="w-full flex justify-center">
+                        <GoogleLogin
+                            clientId="779781376861-biqrgahce5qi427un2o1go6m65l411h6.apps.googleusercontent.com"
+                            onLoginSuccess={onLoginSuccess}
+                        />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (!displayUser) return null;
 
@@ -347,6 +375,18 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                                 <Twitter className="w-5 h-5 text-slate-400 hover:text-sky-500 cursor-pointer transition-colors" />
                             </div>
                         </div>
+
+                        {/* Settings & Logout Block (Only visible on own profile) */}
+                        {isOwnProfile && onLogout && (
+                            <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5 flex flex-col items-center">
+                                <button
+                                    onClick={onLogout}
+                                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors font-medium text-sm w-full justify-center"
+                                >
+                                    Log Out
+                                </button>
+                            </div>
+                        )}
                     </section>
 
                     <section className="bg-gradient-to-br from-indigo-600 to-violet-700 p-8 rounded-3xl text-white shadow-xl">

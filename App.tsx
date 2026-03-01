@@ -267,7 +267,24 @@ const App = () => {
           setSelectedUserForProfile={(u) => { if (u) handleNavigate('profile', u.login) }}
         />} />
         <Route path="/about" element={<About />} />
-        <Route path="/profile" element={<Profile currentUser={user} targetUser={user} addToast={addToast} profileBackground={profileBackground} />} />
+        <Route path="/profile" element={
+          <Profile
+            currentUser={user}
+            targetUser={user}
+            addToast={addToast}
+            profileBackground={profileBackground}
+            onLoginSuccess={(userData) => {
+              setUser(userData);
+              addToast('success', `Welcome back, ${userData.name}!`);
+            }}
+            onLogout={() => {
+              localStorage.removeItem('googleUser');
+              setUser(null);
+              addToast('info', 'Logged out successfully');
+              handleNavigate('home');
+            }}
+          />
+        } />
         <Route path="/profile/:username" element={<ProfileRouteWrapper currentUser={user} addToast={addToast} profileBackground={profileBackground} />} />
         <Route path="/settings" element={
           <Settings
@@ -325,61 +342,14 @@ const App = () => {
                 ))}
               </div>
 
-              <div className="flex-1 flex items-center justify-end gap-2 sm:gap-4">
+              <div className="flex-1 flex items-center justify-end">
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
-                  className={`p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors ${!user && activeSection !== 'home' ? 'mr-2 sm:mr-4' : ''}`}
+                  className="p-2 mr-2 sm:mr-4 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                   aria-label="Toggle dark mode"
                 >
                   {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                 </button>
-
-                <button
-                  onClick={() => setIsSearchOpen(true)}
-                  className="p-2 mr-2 sm:mr-0 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors relative group"
-                  aria-label="Search"
-                >
-                  <SearchIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full border-2 border-white dark:border-black opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-
-                <div className="flex items-center gap-2 sm:gap-4">
-                  {!user ? (
-                    <GoogleLogin
-                      clientId={GOOGLE_CLIENT_ID}
-                      onLoginSuccess={(userData) => {
-                        setUser(userData);
-                        addToast('success', `Welcome back, ${userData.name}!`);
-                      }}
-                    />
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <div className="hidden sm:flex flex-col items-end">
-                        <span className="text-sm font-semibold text-slate-900 dark:text-white leading-none">{user.name}</span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">{user.email}</span>
-                      </div>
-                      <div
-                        className="w-9 h-9 rounded-full border-2 border-indigo-500 overflow-hidden cursor-pointer"
-                        onClick={() => handleNavigate('profile')}
-                      >
-                        <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
-                      </div>
-                      <button
-                        onClick={() => {
-                          localStorage.removeItem('googleUser');
-                          setUser(null);
-                          addToast('info', 'Logged out successfully');
-                          handleNavigate('home');
-                        }}
-                        className="hidden sm:flex p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-                        aria-label="Logout"
-                        title="Logout"
-                      >
-                        <LogOut className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           </div>
@@ -391,17 +361,50 @@ const App = () => {
         <div className="flex items-center justify-around w-full">
           {[
             { id: 'home', icon: HomeIcon, label: 'Home' },
-            { id: 'community', icon: MessageSquare, label: 'Community' },
-            { id: 'events', icon: Calendar, label: 'Events' },
+            { id: 'search', icon: SearchIcon, label: 'Search' },
             { id: 'projects', icon: BookOpen, label: 'Projects' },
-            { id: 'leaderboard', icon: Trophy, label: 'Ranking' }
+            { id: 'leaderboard', icon: Trophy, label: 'Ranking' },
+            { id: 'profile', icon: UserIcon, label: 'Profile' }
           ].map((item) => {
-            const isActive = activeSection === item.id;
+            const isActive = activeSection === item.id || (item.id === 'search' && isSearchOpen);
+
+            // Special rendering for Profile tab when user is logged in
+            if (item.id === 'profile' && user?.avatar_url) {
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigate(item.id)}
+                  className="flex flex-col items-center justify-center w-16 h-14 rounded-2xl transition-all duration-300 relative"
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="mobileNavIndicator"
+                      className="absolute inset-0 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl z-0"
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <div className={`w-6 h-6 rounded-full overflow-hidden border-2 z-10 transition-transform duration-300 ${isActive ? 'scale-110 mb-0.5 border-indigo-500 dark:border-indigo-400' : 'scale-100 hover:scale-105 border-slate-300 dark:border-slate-600'}`}>
+                    <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  </div>
+                  <span className={`text-[10px] font-bold z-10 transition-all duration-300 ${isActive ? 'text-indigo-600 dark:text-indigo-400 opacity-100 tracking-wide' : 'text-slate-500 dark:text-slate-400 opacity-0 h-0 w-0 overflow-hidden'}`}>
+                    {item.label}
+                  </span>
+                </button>
+              );
+            }
+
             const Icon = item.icon;
+
             return (
               <button
                 key={item.id}
-                onClick={() => handleNavigate(item.id)}
+                onClick={() => {
+                  if (item.id === 'search') {
+                    setIsSearchOpen(true);
+                  } else {
+                    handleNavigate(item.id);
+                  }
+                }}
                 className={`flex flex-col items-center justify-center w-16 h-14 rounded-2xl transition-all duration-300 relative ${isActive
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -484,7 +487,7 @@ const App = () => {
         setSelectedUserForProfile={(u) => handleNavigate('profile', u?.login)}
       />
 
-    </div>
+    </div >
   );
 };
 
