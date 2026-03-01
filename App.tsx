@@ -419,8 +419,51 @@ const App = () => {
                       {section}
                     </button>
                   ))}
-                  <div className="pt-4 flex flex-col gap-3 px-4">
-
+                  <div className="pt-4 pb-2 flex flex-col gap-3 px-4 border-t border-slate-100 dark:border-white/10 mt-2">
+                    {!user ? (
+                      <div className="flex justify-center w-full">
+                        <GoogleLogin
+                          clientId={GOOGLE_CLIENT_ID}
+                          onLoginSuccess={(userData) => {
+                            setUser(userData);
+                            addToast('success', `Welcome back, ${userData.name}!`);
+                            setIsMenuOpen(false);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900 p-3 rounded-xl border border-slate-100 dark:border-white/5">
+                        <div
+                          className="flex items-center gap-3 cursor-pointer"
+                          onClick={() => {
+                            handleNavigate('profile');
+                            setIsMenuOpen(false);
+                          }}
+                        >
+                          <div className="w-10 h-10 rounded-full border-2 border-indigo-500 overflow-hidden">
+                            <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white leading-none mb-1">{user.name}</span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400">{user.email}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            localStorage.removeItem('googleUser');
+                            setUser(null);
+                            addToast('info', 'Logged out successfully');
+                            handleNavigate('home');
+                            setIsMenuOpen(false);
+                          }}
+                          className="p-2 rounded-full bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+                          aria-label="Logout"
+                          title="Logout"
+                        >
+                          <LogOut className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
