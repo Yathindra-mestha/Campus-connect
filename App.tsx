@@ -82,6 +82,7 @@ const App = () => {
     }
     return 'default';
   });
+  const [isDesktopProfileOpen, setIsDesktopProfileOpen] = useState(false);
 
   const addToast = (type: ToastType, message: string, duration?: number) => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -342,14 +343,109 @@ const App = () => {
                 ))}
               </div>
 
-              <div className="flex-1 flex items-center justify-end">
+              <div className="flex-1 flex items-center justify-end gap-4">
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
-                  className="p-2 mr-2 sm:mr-4 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                  className="p-2 mr-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                   aria-label="Toggle dark mode"
                 >
                   {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                 </button>
+
+                {/* Desktop Login / Profile Dropdown */}
+                <div className="hidden md:flex relative items-center">
+                  {!user ? (
+                    <GoogleLogin
+                      clientId={GOOGLE_CLIENT_ID}
+                      onLoginSuccess={(userData) => {
+                        setUser(userData);
+                        addToast('success', `Welcome back, ${userData.name}!`);
+                      }}
+                    />
+                  ) : (
+                    <div className="relative">
+                      <button
+                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-200 dark:border-white/10 hover:border-indigo-500 transition-colors focus:outline-none"
+                        onClick={() => setIsDesktopProfileOpen(!isDesktopProfileOpen)}
+                      >
+                        <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      <AnimatePresence>
+                        {isDesktopProfileOpen && (
+                          <>
+                            {/* Click Away Overlay */}
+                            <div
+                              className="fixed inset-0 z-40"
+                              onClick={() => setIsDesktopProfileOpen(false)}
+                            />
+                            <motion.div
+                              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute right-0 top-14 w-64 bg-[#1e1e1e] dark:bg-[#1c1c1e] rounded-2xl shadow-2xl border border-white/5 overflow-hidden z-50 origin-top-right font-sans"
+                            >
+                              {/* Header Profile Section */}
+                              <div className="p-4 bg-[#2c2c2e]/50 dark:bg-black/20 backdrop-blur-md border-b border-white/5 flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-white/10">
+                                  <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex flex-col overflow-hidden">
+                                  <span className="text-white font-bold text-[15px] truncate leading-tight">{user.name}</span>
+                                  <span className="text-[10px] font-black text-indigo-400 tracking-wider uppercase mt-0.5">Active Member</span>
+                                </div>
+                              </div>
+
+                              {/* Menu Items */}
+                              <div className="p-2 flex flex-col gap-1">
+                                <button
+                                  onClick={() => { handleNavigate('profile'); setIsDesktopProfileOpen(false); }}
+                                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-[15px] font-medium group"
+                                >
+                                  <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+                                  Profile
+                                </button>
+                                <button
+                                  onClick={() => { handleNavigate('dashboard'); setIsDesktopProfileOpen(false); }}
+                                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-[15px] font-medium group"
+                                >
+                                  <LayoutDashboard className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+                                  Dashboard
+                                </button>
+                                <button
+                                  onClick={() => { handleNavigate('settings'); setIsDesktopProfileOpen(false); }}
+                                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-[15px] font-medium group"
+                                >
+                                  <SettingsIcon className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+                                  Settings
+                                </button>
+                              </div>
+
+                              {/* Footer Action */}
+                              <div className="p-2 border-t border-white/5">
+                                <button
+                                  onClick={() => {
+                                    localStorage.removeItem('googleUser');
+                                    setUser(null);
+                                    setIsDesktopProfileOpen(false);
+                                    addToast('info', 'Logged out successfully');
+                                    handleNavigate('home');
+                                  }}
+                                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-colors text-[15px] font-semibold"
+                                >
+                                  <LogOut className="w-5 h-5" />
+                                  Log Out
+                                </button>
+                              </div>
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
