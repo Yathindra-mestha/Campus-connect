@@ -54,7 +54,9 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
                 // Specifically check for common credential/config issues
                 if (friendlyMessage === "Failed to fetch") {
                     const config = getSupabaseConfig();
+                    const buildTime = new Date().toLocaleTimeString();
                     friendlyMessage = `Network Error (Failed to fetch). 
+[Build Time: ${buildTime}]
 Diagnostics:
 - URL: ${config.url.substring(0, 25)}... ${config.isUrlPlaceholder ? '(PLACEHOLDER)' : '(OK)'}
 - Key: ${config.key.substring(0, 15)}... ${config.isKeyPlaceholder ? '(PLACEHOLDER)' : '(OK)'}
