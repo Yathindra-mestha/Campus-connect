@@ -9,7 +9,7 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 // Fallback to placeholder to prevent global crash
-const clientUrl = supabaseUrl || 'https://placeholder-url-missing.supabase.co';
-const clientKey = supabaseKey || 'placeholder-key-missing';
+const clientUrl = supabaseUrl || 'https://VITE_SUPABASE_URL_IS_MISSING.supabase.co';
+const clientKey = supabaseKey || 'VITE_SUPABASE_ANON_KEY_IS_MISSING';
 
 export const supabase = createClient(clientUrl, clientKey);
