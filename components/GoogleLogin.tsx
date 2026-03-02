@@ -1,6 +1,6 @@
 import React, { useEffect, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../src/lib/supabaseClient';
+import { supabase, getSupabaseConfig } from '../src/lib/supabaseClient';
 import { ENV_CONFIG } from '../src/constants/config';
 
 // Declaration for google accounts id
@@ -53,7 +53,12 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
 
                 // Specifically check for common credential/config issues
                 if (friendlyMessage === "Failed to fetch") {
-                    friendlyMessage = "Network Error: 'Failed to fetch'. This usually means VITE_SUPABASE_URL is missing or incorrect in your Vercel settings.";
+                    const config = getSupabaseConfig();
+                    friendlyMessage = `Network Error (Failed to fetch). 
+Diagnostics:
+- URL: ${config.url.substring(0, 15)}... ${config.isUrlPlaceholder ? '(PLACEHOLDER)' : '(OK)'}
+- Key: ${config.key.substring(0, 10)}... ${config.isKeyPlaceholder ? '(PLACEHOLDER)' : '(OK)'}
+Check your Vercel Environment Variables!`;
                 } else if (error.status === 400 || error.message.includes('apiKey') || error.message.includes('JWT')) {
                     friendlyMessage = "Configuration error: Invalid Supabase API Key or Google Auth not enabled in Supabase.";
                 } else if (error.message.includes('provider')) {
