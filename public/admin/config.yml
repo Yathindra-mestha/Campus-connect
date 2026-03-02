@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: Yathindra-mestha/Campus_connect # Adjust mapping to the correct repo owner/name
+  repo: Yathindra-mestha/Campus-connect # Fixed mapping to the correct repo name
   branch: main
 
 # These settings map where media is uploaded in the repository and how it's referenced in the content

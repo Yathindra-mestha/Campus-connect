@@ -3,15 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, Target, Trophy, UploadCloud,
     Edit3, ShieldAlert, ArrowRight, ExternalLink,
-    X, Save, User as UserIcon, Github, Linkedin, Mail
+    X, Save, User as UserIcon, Github, Linkedin, Mail,
+    MessageSquare, Trash2, Settings, Loader2
 } from 'lucide-react';
 import { githubService, ProjectData } from '../utils/github';
 import { supabase } from '../src/lib/supabaseClient';
 
 const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handleNavigate: (path: string) => void; onProfileUpdate?: () => void }) => {
     const [userProjects, setUserProjects] = useState<ProjectData[]>([]);
+    const [userPosts, setUserPosts] = useState<any[]>([]);
     const [userRank, setUserRank] = useState<{ rank: number; points: number } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isDeletingPost, setIsDeletingPost] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({
         name: user?.name || '',
@@ -57,6 +60,41 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
         }
     };
 
+    const fetchUserPosts = async () => {
+        if (!user?.id) return;
+        try {
+            const { data, error } = await supabase
+                .from('posts')
+                .select('*')
+                .eq('author_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setUserPosts(data || []);
+        } catch (err) {
+            console.error('Error fetching user posts:', err);
+        }
+    };
+
+    const handleDeletePost = async (postId: string) => {
+        if (!window.confirm('Are you sure you want to delete this post?')) return;
+        setIsDeletingPost(postId);
+        try {
+            const { error } = await supabase
+                .from('posts')
+                .delete()
+                .eq('id', postId);
+
+            if (error) throw error;
+            setUserPosts(userPosts.filter(p => p.id !== postId));
+        } catch (err) {
+            console.error('Error deleting post:', err);
+            alert('Failed to delete post');
+        } finally {
+            setIsDeletingPost(null);
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             if (!user) {
@@ -69,6 +107,9 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                     githubService.getAllProjects(),
                     githubService.getLeaderboard(),
                 ]);
+
+                // Also fetch user posts
+                fetchUserPosts();
 
                 const loggedInUserLogin = user.login || user.email?.split('@')[0] || user.name?.replace(/\s+/g, '').toLowerCase();
 
@@ -156,6 +197,13 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                 </div>
 
                 <div className="flex gap-3">
+                    <a
+                        href="/admin"
+                        className="px-6 py-3 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+                    >
+                        <Settings className="w-5 h-5" />
+                        CMS Admin
+                    </a>
                     <button
                         onClick={() => handleNavigate('members')}
                         className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold flex items-center gap-2 hover:opacity-90 transition-opacity"
@@ -339,6 +387,48 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                                 >
                                     Upload First Project
                                 </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="bg-white dark:bg-[#1e1e1e] rounded-3xl border border-slate-200 dark:border-white/5 p-8 md:p-10">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Your Hub Activity</h2>
+                            <button
+                                onClick={() => handleNavigate('community')}
+                                className="text-indigo-600 dark:text-indigo-400 hover:opacity-70 font-black flex items-center gap-2 transition-opacity"
+                            >
+                                Open Forum <ArrowRight className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {userPosts.length > 0 ? (
+                            <div className="space-y-4">
+                                {userPosts.map((post) => (
+                                    <div key={post.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl group border border-transparent hover:border-indigo-500/30 transition-all">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                                                <MessageSquare className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1">{post.title}</h3>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(post.created_at).toLocaleDateString()} • {post.category}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeletePost(post.id)}
+                                            disabled={isDeletingPost === post.id}
+                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                        >
+                                            {isDeletingPost === post.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 bg-slate-50 dark:bg-black/20 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10">
+                                <MessageSquare className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No posts yet. Start a conversation!</p>
                             </div>
                         )}
                     </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { supabase } from '../src/lib/supabaseClient';
+import { ENV_CONFIG } from '../src/constants/config';
 
 // Declaration for google accounts id
 declare global {
@@ -37,17 +38,44 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
         }
     };
 
-    const handleCredentialResponse = (response: any) => {
+    const handleCredentialResponse = async (response: any) => {
         const userData = decodeJWT(response.credential);
         if (userData) {
-            // Store in localStorage as requested
+            // Sign in with Supabase using the ID token
+            const { data, error } = await supabase.auth.signInWithIdToken({
+                provider: 'google',
+                token: response.credential,
+            });
+
+            if (error) {
+                console.error('Supabase auth error:', error);
+                let friendlyMessage = error.message;
+
+                // Specifically check for common credential/config issues
+                if (error.status === 400 || error.message.includes('apiKey') || error.message.includes('JWT')) {
+                    friendlyMessage = "Configuration error: Invalid Supabase API Key or Google Auth not enabled in Supabase.";
+                } else if (error.message.includes('provider')) {
+                    friendlyMessage = "Google Auth is not enabled in your Supabase project.";
+                } else if (error.message.includes('authorized domain')) {
+                    friendlyMessage = "This domain is not authorized for Google Login in Supabase.";
+                }
+
+                if (onLoginFailure) onLoginFailure(friendlyMessage);
+                alert(`Login Failed: ${friendlyMessage}`);
+                return;
+            }
+
             const userInfo = {
                 name: userData.name,
                 email: userData.email,
                 picture: userData.picture,
-                login: userData.email, // Use email as login for consistency with App.tsx
-                avatar_url: userData.picture
+                login: userData.email, // Use email as login for consistency
+                avatar_url: userData.picture,
+                supabase_user: data.user
             };
+
+            // Note: App.tsx will eventually handle the session from Supabase
+            // but we keep this for backward compatibility during transition
             localStorage.setItem('googleUser', JSON.stringify(userInfo));
             onLoginSuccess(userInfo);
             navigate('/profile');

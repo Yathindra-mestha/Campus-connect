@@ -18,8 +18,10 @@ import {
   X,
   ArrowRight,
   Filter,
-  Github
+  Github,
+  Loader2
 } from 'lucide-react';
+import { supabase } from '../src/lib/supabaseClient';
 
 const CHANNELS = [
   { id: 'global', name: 'global-chat', description: 'Public discussion for everyone' },
@@ -34,32 +36,20 @@ const FORUM_CATEGORIES = [
   { id: 'general', name: 'General Discussions', icon: MessageSquare },
 ];
 
-const DISCUSSIONS = [
-  {
-    id: 1,
-    author: 'Sarah Jenkins',
-    branch: 'CSE',
-    time: '2h ago',
-    category: 'general',
-    title: 'Modern Architecture Patterns for Campus Apps',
-    content: 'Let\'s talk about how to scale student-led projects using serverless tech and unified data layers.',
-    tags: ['Architecture', 'Scaling'],
-    likes: 42,
-    replies: 12
-  },
-  {
-    id: 2,
-    author: 'Rahul Sharma',
-    branch: 'ECE',
-    time: '5h ago',
-    category: 'general',
-    title: 'Next-gen IoT Sensors for Campus Smart Grid',
-    content: 'Exploring the latest LoRaWAN sensors for monitoring building energy consumption in real-time.',
-    tags: ['IoT', 'Sustainability'],
-    likes: 31,
-    replies: 5
-  }
-];
+// Discussions are now fetched from Supabase
+interface Discussion {
+  id: string | number;
+  author: string;
+  author_id?: string;
+  branch: string;
+  created_at: string;
+  category: string;
+  title: string;
+  content: string;
+  tags: string[];
+  likes: number;
+  replies: number;
+}
 
 interface Message {
   id: string;
@@ -81,6 +71,10 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
   const [forumCategory, setForumCategory] = useState('all');
   const [isNewPostModalOpen, setIsNewPostModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [discussions, setDiscussions] = useState<Discussion[]>([]);
+  const [isLoadingDiscussions, setIsLoadingDiscussions] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newPost, setNewPost] = useState({ title: '', content: '', category: 'General', tags: '' });
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -103,6 +97,29 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeChannel = CHANNELS.find(c => c.id === activeTab);
+
+  // Fetch discussions from Supabase
+  const fetchDiscussions = async () => {
+    setIsLoadingDiscussions(true);
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDiscussions(data || []);
+    } catch (err) {
+      console.error('Error fetching discussions:', err);
+      addToast('error', 'Failed to load discussions');
+    } finally {
+      setIsLoadingDiscussions(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDiscussions();
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -139,10 +156,48 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
     setInputText('');
   };
 
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPost.title.trim() || !newPost.content.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('posts')
+        .insert([{
+          title: newPost.title,
+          content: newPost.content,
+          category: newPost.category.toLowerCase(),
+          tags: newPost.tags.split(',').map(t => t.trim()).filter(t => t),
+          author: user.user_metadata.full_name || user.email,
+          author_id: user.id,
+          branch: user.user_metadata.branch || 'General',
+          likes: 0,
+          replies: 0
+        }]);
+
+      if (error) throw error;
+
+      addToast('success', 'Post published successfully!');
+      setIsNewPostModalOpen(false);
+      setNewPost({ title: '', content: '', category: 'General', tags: '' });
+      fetchDiscussions();
+    } catch (err: any) {
+      console.error('Error creating post:', err);
+      addToast('error', err.message || 'Failed to publish post');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const filteredMessages = messages.filter(m => m.channelId === activeTab);
-  const filteredDiscussions = DISCUSSIONS.filter(d =>
+  const filteredDiscussions = discussions.filter(d =>
     (forumCategory === 'all' || d.category === forumCategory) &&
-    (d.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    (d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.content.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -268,35 +323,46 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
                     <button className="p-3 bg-slate-50 dark:bg-black/20 rounded-2xl"><Filter className="w-4 h-4 text-slate-400" /></button>
                   </div>
 
-                  {filteredDiscussions.map((d, idx) => (
-                    <motion.div
-                      key={d.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="p-6 bg-white dark:bg-[#2b2d31] rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-xl transition-all group cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3 mb-4">
-                        <img src={optimizeImage(`https://picsum.photos/seed/${d.author}/100`, { width: 32 })} className="w-8 h-8 rounded-full" alt="" loading="lazy" decoding="async" />
-                        <div className="flex flex-col">
-                          <span className="text-xs font-black group-hover:text-indigo-600 transition-colors">{d.author}</span>
-                          <span className="text-[10px] text-slate-400">{d.branch} • {d.time}</span>
-                        </div>
-                      </div >
-                      <h4 className="font-black text-xl mb-2 group-hover:translate-x-1 transition-transform">{d.title}</h4>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">{d.content}</p>
+                  {isLoadingDiscussions ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                      <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+                      <p className="text-slate-500">Loading discussions...</p>
+                    </div>
+                  ) : filteredDiscussions.length > 0 ? (
+                    filteredDiscussions.map((d, idx) => (
+                      <motion.div
+                        key={d.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="p-6 bg-white dark:bg-[#2b2d31] rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-xl transition-all group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 mb-4">
+                          <img src={`https://ui-avatars.com/api/?name=${d.author}&background=random`} className="w-8 h-8 rounded-full" alt="" />
+                          <div className="flex flex-col">
+                            <span className="text-xs font-black group-hover:text-indigo-600 transition-colors">{d.author}</span>
+                            <span className="text-[10px] text-slate-400">{d.branch} • {new Date(d.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div >
+                        <h4 className="font-black text-xl mb-2 group-hover:translate-x-1 transition-transform">{d.title}</h4>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">{d.content}</p>
 
-                      <div className="flex items-center gap-4 pt-6 border-t border-slate-50 dark:border-white/5">
-                        <div className="flex gap-2">
-                          {d.tags.map(t => <span key={t} className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded-md font-bold text-slate-400">#{t}</span>)}
+                        <div className="flex items-center gap-4 pt-6 border-t border-slate-50 dark:border-white/5">
+                          <div className="flex gap-2">
+                            {d.tags?.map(t => <span key={t} className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded-md font-bold text-slate-400">#{t}</span>)}
+                          </div>
+                          <div className="ml-auto flex items-center gap-4">
+                            <span className="flex items-center gap-1.5 text-xs font-bold text-slate-400"><ThumbsUp className="w-4 h-4" /> {d.likes}</span>
+                            <span className="flex items-center gap-1.5 text-xs font-bold text-slate-400"><MessageCircle className="w-4 h-4" /> {d.replies}</span>
+                          </div>
                         </div>
-                        <div className="ml-auto flex items-center gap-4">
-                          <span className="flex items-center gap-1.5 text-xs font-bold text-slate-400"><ThumbsUp className="w-4 h-4" /> {d.likes}</span>
-                          <span className="flex items-center gap-1.5 text-xs font-bold text-slate-400"><MessageCircle className="w-4 h-4" /> {d.replies}</span>
-                        </div>
-                      </div>
-                    </motion.div >
-                  ))}
+                      </motion.div >
+                    ))
+                  ) : (
+                    <div className="text-center py-20">
+                      <p className="text-slate-500">No discussions found.</p>
+                    </div>
+                  )}
                 </div >
               </div >
             </motion.div >
@@ -373,17 +439,50 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
                   <h2 className="text-2xl font-black">Create Hub Post</h2>
                   <button onClick={() => setIsNewPostModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X className="w-6 h-6" /></button>
                 </div>
-                <div className="space-y-4">
-                  <input type="text" placeholder="Title" className="w-full px-6 py-4 bg-slate-50 dark:bg-black/20 border-none rounded-2xl text-sm font-bold placeholder:text-slate-400" />
-                  <textarea rows={4} placeholder="What's on your mind?" className="w-full px-6 py-4 bg-slate-50 dark:bg-black/20 border-none rounded-2xl text-sm font-medium resize-none placeholder:text-slate-400" />
+                <form onSubmit={handleCreatePost} className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Title"
+                    required
+                    value={newPost.title}
+                    onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                    className="w-full px-6 py-4 bg-slate-50 dark:bg-black/20 border-none rounded-2xl text-sm font-bold placeholder:text-slate-400"
+                  />
+                  <textarea
+                    rows={4}
+                    placeholder="What's on your mind?"
+                    required
+                    value={newPost.content}
+                    onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                    className="w-full px-6 py-4 bg-slate-50 dark:bg-black/20 border-none rounded-2xl text-sm font-medium resize-none placeholder:text-slate-400"
+                  />
                   <div className="grid grid-cols-2 gap-4">
-                    <select className="px-6 py-4 bg-slate-50 dark:bg-black/20 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500">
+                    <select
+                      value={newPost.category}
+                      onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
+                      className="px-6 py-4 bg-slate-50 dark:bg-black/20 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500"
+                    >
                       <option>General</option>
+                      <option>Project</option>
+                      <option>Question</option>
+                      <option>Idea</option>
                     </select>
-                    <input type="text" placeholder="Tags (React, IoT...)" className="px-6 py-4 bg-slate-50 dark:bg-black/20 border-none rounded-2xl text-sm font-medium placeholder:text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Tags (comma separated)"
+                      value={newPost.tags}
+                      onChange={(e) => setNewPost({ ...newPost, tags: e.target.value })}
+                      className="px-6 py-4 bg-slate-50 dark:bg-black/20 border-none rounded-2xl text-sm font-medium placeholder:text-slate-400"
+                    />
                   </div>
-                </div>
-                <button className="w-full mt-10 bg-indigo-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all">Publish Post</button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full mt-6 bg-indigo-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Publish Post'}
+                  </button>
+                </form>
               </motion.div>
             </div>
           )

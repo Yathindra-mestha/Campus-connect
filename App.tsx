@@ -42,70 +42,22 @@ import {
   User as UserIcon,
   Search as SearchIcon
 } from 'lucide-react';
-import { githubService, ProjectData } from './utils/github';
+import { githubService } from './utils/github';
 import Home from './components/Home';
 import GoogleLogin from './components/GoogleLogin';
 import { supabase } from './src/lib/supabaseClient';
+import { useAuth } from './src/hooks/useAuth';
+import { useToast } from './src/hooks/useToast';
+import { ENV_CONFIG } from './src/constants/config';
+import { Project, LeaderboardEntry } from './types';
+
 import MembersList from './components/MembersList';
 import PublicProfile from './components/PublicProfile';
 
-
-
-const GOOGLE_CLIENT_ID = "779781376861-biqrgahce5qi427un2o1go6m65l411h6.apps.googleusercontent.com";
-
 const App = () => {
-  const [user, setUser] = useState<{ login: string, avatar_url: string, name?: string, email?: string, id?: string } | null>(() => {
-    if (typeof window !== 'undefined') {
-      const savedUser = localStorage.getItem('googleUser');
-      return savedUser ? JSON.parse(savedUser) : null;
-    }
-    return null;
-  });
+  const { user, setUser, syncUserProfile } = useAuth();
+  const { toasts, addToast, removeToast } = useToast();
 
-  // Sync user profile from Supabase
-  const syncUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (data && !error) {
-        const updatedUser = {
-          ...user,
-          ...data,
-          login: data.id // Ensure we have a login/id
-        };
-        setUser(updatedUser);
-        localStorage.setItem('googleUser', JSON.stringify(updatedUser));
-      }
-    } catch (err) {
-      console.error('Error syncing profile:', err);
-    }
-  };
-
-  useEffect(() => {
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        syncUserProfile(session.user.id);
-      }
-    };
-
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        syncUserProfile(session.user.id);
-      } else {
-        setUser(null);
-        localStorage.removeItem('googleUser');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -126,7 +78,6 @@ const App = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [profileBackground, setProfileBackground] = useState<'default' | 'landscape'>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('profileBackground') as 'default' | 'landscape') || 'default';
@@ -134,15 +85,6 @@ const App = () => {
     return 'default';
   });
   const [isDesktopProfileOpen, setIsDesktopProfileOpen] = useState(false);
-
-  const addToast = (type: ToastType, message: string, duration?: number) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts(prev => [...prev, { id, type, message, duration }]);
-  };
-
-  const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  };
 
 
 
@@ -254,8 +196,8 @@ const App = () => {
     events: 120,
     contributors: 850
   });
-  const [featuredProjects, setFeaturedProjects] = useState<ProjectData[]>([]);
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   React.useEffect(() => {
     const fetchStats = async () => {
@@ -282,7 +224,7 @@ const App = () => {
 
     useEffect(() => {
       if (username && username !== currentUser?.login) {
-        githubService.getLeaderboard().then((leaderboard: any[]) => {
+        githubService.getLeaderboard().then((leaderboard: LeaderboardEntry[]) => {
           const target = leaderboard.find(u => u.login === username);
           if (target) {
             setTargetUser(target);
@@ -329,7 +271,8 @@ const App = () => {
               setUser(userData);
               addToast('success', `Welcome back, ${userData.name}!`);
             }}
-            onLogout={() => {
+            onLogout={async () => {
+              await supabase.auth.signOut();
               localStorage.removeItem('googleUser');
               setUser(null);
               addToast('info', 'Logged out successfully');
@@ -409,10 +352,13 @@ const App = () => {
                 <div className="hidden md:flex relative items-center">
                   {!user ? (
                     <GoogleLogin
-                      clientId={GOOGLE_CLIENT_ID}
+                      clientId={ENV_CONFIG.GOOGLE_CLIENT_ID}
                       onLoginSuccess={(userData) => {
                         setUser(userData);
                         addToast('success', `Welcome back, ${userData.name}!`);
+                      }}
+                      onLoginFailure={(err) => {
+                        addToast('error', `Login failed: ${err}`);
                       }}
                     />
                   ) : (
@@ -479,7 +425,8 @@ const App = () => {
                               {/* Footer Action */}
                               <div className="p-2 border-t border-white/5">
                                 <button
-                                  onClick={() => {
+                                  onClick={async () => {
+                                    await supabase.auth.signOut();
                                     localStorage.removeItem('googleUser');
                                     setUser(null);
                                     setIsDesktopProfileOpen(false);
