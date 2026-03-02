@@ -56,8 +56,8 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
                     const config = getSupabaseConfig();
                     friendlyMessage = `Network Error (Failed to fetch). 
 Diagnostics:
-- URL: ${config.url.substring(0, 15)}... ${config.isUrlPlaceholder ? '(PLACEHOLDER)' : '(OK)'}
-- Key: ${config.key.substring(0, 10)}... ${config.isKeyPlaceholder ? '(PLACEHOLDER)' : '(OK)'}
+- URL: ${config.url.substring(0, 25)}... ${config.isUrlPlaceholder ? '(PLACEHOLDER)' : '(OK)'}
+- Key: ${config.key.substring(0, 15)}... ${config.isKeyPlaceholder ? '(PLACEHOLDER)' : '(OK)'}
 Check your Vercel Environment Variables!`;
                 } else if (error.status === 400 || error.message.includes('apiKey') || error.message.includes('JWT')) {
                     friendlyMessage = "Configuration error: Invalid Supabase API Key or Google Auth not enabled in Supabase.";
