@@ -118,7 +118,7 @@ const About = () => {
                     <h2 className="text-4xl font-black text-slate-900 dark:text-white text-center">Meet the Architects</h2>
                 </div>
 
-                {/* 4-Box Founder Grid */}
+                {/* 2-Box Founder Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
                     {/* Box 1: Core Identity (Yathindra Mestha) */}
                     <motion.div
@@ -143,53 +143,7 @@ const About = () => {
                         </div>
                     </motion.div>
 
-                    {/* Box 2: Vinayakahr10 */}
-                    <motion.div
-                        variants={cardVariants}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true }}
-                        className="p-10 rounded-none bg-indigo-600/5 dark:bg-indigo-500/5 backdrop-blur-xl border border-indigo-600/10 dark:border-white/5 relative overflow-hidden group"
-                    >
-                        <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
-                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-indigo-500/20 group-hover:border-indigo-500 transition-colors duration-500">
-                                <img src={optimizeImage("https://github.com/Vinayakahr10.png", { width: 320 })} alt="Developer" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                            </div>
-                            <div>
-                                <h3 className="text-3xl font-black mb-2 text-slate-900 dark:text-white">Vinayakahr10</h3>
-                                <p className="text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider text-sm opacity-90">Architect & Developer</p>
-                                <div className="inline-flex items-center gap-2 mt-4 px-3 py-1 rounded-none bg-indigo-600/5 dark:bg-white/5 backdrop-blur-md border border-indigo-600/20 dark:border-white/10 text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                                    <Sparkles className="w-3 h-3" />
-                                    <span>Innovation Focus</span>
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Box 3: Jeeshan-jxeexu */}
-                    <motion.div
-                        variants={cardVariants}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true }}
-                        className="p-10 rounded-none bg-indigo-600/5 dark:bg-indigo-500/5 backdrop-blur-xl border border-indigo-600/10 dark:border-white/5 relative overflow-hidden group"
-                    >
-                        <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
-                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-indigo-500/20 group-hover:border-indigo-500 transition-colors duration-500">
-                                <img src={optimizeImage("https://github.com/Jeeshan-jxeexu.png", { width: 320 })} alt="Developer" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                            </div>
-                            <div>
-                                <h3 className="text-3xl font-black mb-2 text-slate-900 dark:text-white">Jeeshan-jxeexu</h3>
-                                <p className="text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider text-sm opacity-90">Architect & Developer</p>
-                                <div className="inline-flex items-center gap-2 mt-4 px-3 py-1 rounded-none bg-indigo-600/5 dark:bg-white/5 backdrop-blur-md border border-indigo-600/20 dark:border-white/10 text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                                    <TrendingUp className="w-3 h-3" />
-                                    <span>Visionary Path</span>
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Box 4: srujanem */}
+                    {/* Box 2: srujanem */}
                     <motion.div
                         variants={cardVariants}
                         initial="hidden"

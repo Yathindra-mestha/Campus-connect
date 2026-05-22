@@ -21,7 +21,7 @@ import {
   Github,
   Loader2
 } from 'lucide-react';
-import { supabase } from '../src/lib/supabaseClient';
+import { supabase, getSupabaseConfig } from '../src/lib/supabaseClient';
 
 const CHANNELS = [
   { id: 'global', name: 'global-chat', description: 'Public discussion for everyone' },
@@ -60,6 +60,45 @@ interface Message {
   channelId: string;
 }
 
+const MOCK_DISCUSSIONS: Discussion[] = [
+  {
+    id: 'mock-1',
+    author: 'Yathindra Mestha',
+    branch: 'Computer Science • CSE',
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    category: 'project',
+    title: 'Introducing CampusConnect Platform! 🚀',
+    content: 'Welcome everyone! We designed CampusConnect to be a centralized hub for all students to showcase their projects, share ideas, and build a stronger campus community. Let us know your thoughts or feedback in the comments!',
+    tags: ['Announcement', 'CampusConnect', 'NextGen'],
+    likes: 42,
+    replies: 5
+  },
+  {
+    id: 'mock-2',
+    author: 'Sarah Jenkins',
+    branch: 'Electronics • ECE',
+    created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
+    category: 'question',
+    title: 'Looking for IoT collaborators for the upcoming Hackathon 🌿',
+    content: "I'm working on a Smart Greenhouse project using ESP32 and React for the dashboard. Looking for someone with frontend experience or hardware design to team up. Drop a reply if you're interested!",
+    tags: ['IoT', 'Hackathon', 'Collaboration'],
+    likes: 18,
+    replies: 3
+  },
+  {
+    id: 'mock-3',
+    author: 'Alex Chen',
+    branch: 'Computer Science • CSE',
+    created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
+    category: 'idea',
+    title: 'Campus Marketplace App: Open Source Contribution',
+    content: 'We are planning to open-source the Campus Marketplace app so anyone can contribute and add new features. Check out our GitHub repository and feel free to open a PR or submit an issue!',
+    tags: ['OpenSource', 'React', 'Marketplace'],
+    likes: 29,
+    replies: 12
+  }
+];
+
 interface CommunityProps {
   autoOpenNewPost?: boolean;
   onNewPostHandled?: () => void;
@@ -88,19 +127,30 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
       id: '2',
       sender: 'Alex Chen',
       avatar: 'https://picsum.photos/seed/alex/100',
-      content: 'I\'m definitely interested! Which stack are we looking at?',
+      content: "I'm definitely interested! Which stack are we looking at?",
       timestamp: '2:35 PM',
       channelId: 'global'
     }
   ]);
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasShownErrorRef = useRef(false);
 
   const activeChannel = CHANNELS.find(c => c.id === activeTab);
 
-  // Fetch discussions from Supabase
+  // Fetch discussions from Supabase, fallback to high-quality mock discussions
   const fetchDiscussions = async () => {
     setIsLoadingDiscussions(true);
+    
+    // Check if Supabase configuration is missing or placeholder
+    const config = getSupabaseConfig();
+    if (config.isUrlPlaceholder || config.isKeyPlaceholder) {
+      console.warn("Supabase is not configured. Loading offline/demo discussions.");
+      setDiscussions(MOCK_DISCUSSIONS);
+      setIsLoadingDiscussions(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('posts')
@@ -111,7 +161,13 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
       setDiscussions(data || []);
     } catch (err) {
       console.error('Error fetching discussions:', err);
-      addToast('error', 'Failed to load discussions');
+      setDiscussions(MOCK_DISCUSSIONS);
+      
+      // Prevent duplicate toast triggers (e.g. from React 18/19 double-useEffect mounts in dev)
+      if (!hasShownErrorRef.current) {
+        addToast('info', 'Loaded demo discussions');
+        hasShownErrorRef.current = true;
+      }
     } finally {
       setIsLoadingDiscussions(false);
     }

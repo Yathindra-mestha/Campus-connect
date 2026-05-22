@@ -184,11 +184,17 @@ const Events = () => {
                         Winners
                       </div>
                       <ul className="text-sm text-amber-900 dark:text-amber-200 space-y-1">
-                        {event.winners.map((winner, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <span className="font-bold text-amber-500">{idx + 1}.</span> {winner}
+                        {Array.isArray(event.winners) ? (
+                          event.winners.map((winner, idx) => (
+                            <li key={idx} className="flex items-center gap-2">
+                              <span className="font-bold text-amber-500">{idx + 1}.</span> {winner}
+                            </li>
+                          ))
+                        ) : typeof event.winners === 'string' && event.winners.trim() ? (
+                          <li className="flex items-center gap-2">
+                            <span className="font-bold text-amber-500">1.</span> {event.winners.replace(/^-\s*/, '')}
                           </li>
-                        ))}
+                        ) : null}
                       </ul>
                     </div>
                   )}

@@ -9,29 +9,63 @@ const STUDENTS_DIR = path.join(__dirname, '../src/content/students');
 const EVENTS_DIR = path.join(__dirname, '../src/content/events');
 const PUBLIC_DATA_DIR = path.join(__dirname, '../public/data');
 
-// Simple frontmatter parser
+// Simple frontmatter parser that supports basic YAML fields and multiline lists
 function parseFrontmatter(content) {
     const match = content.match(/^---([\s\S]*?)---/);
     if (!match) return null;
 
     const fm = match[1];
+    const lines = fm.split(/\r?\n/);
     const result = {};
+    
+    let currentField = null;
+    let currentArray = null;
 
-    const fields = ['title', 'description', 'tags', 'image', 'github_url', 'branch', 'date', 'time', 'location', 'category', 'participants', 'maxParticipants', 'winners', 'name', 'bio', 'cover_url', 'avatar_url', 'last_active_at'];
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
 
-    fields.forEach(field => {
-        // Regex to match: field: "value" or field: ["value1", "value2"]
-        const regex = new RegExp(`${field}:\\s*(.*)`);
-        const fieldMatch = fm.match(regex);
-        if (fieldMatch) {
-            try {
-                result[field] = JSON.parse(fieldMatch[1].trim());
-            } catch (e) {
-                // Fallback if not valid JSON
-                result[field] = fieldMatch[1].trim().replace(/^"|"$/g, '');
+        // Check if line is an array item like "- value"
+        if (trimmed.startsWith('-') && currentField && currentArray) {
+            const val = trimmed.substring(1).trim().replace(/^"|"$/g, '').replace(/^'|'$/g, '');
+            currentArray.push(val);
+            result[currentField] = currentArray;
+            continue;
+        }
+
+        // Reset if it's not a list item
+        currentArray = null;
+        currentField = null;
+
+        // Check for field: value
+        const colonIdx = line.indexOf(':');
+        if (colonIdx !== -1) {
+            const key = line.substring(0, colonIdx).trim();
+            const val = line.substring(colonIdx + 1).trim();
+
+            if (val === '[]') {
+                result[key] = [];
+            } else if (val.startsWith('[') && val.endsWith(']')) {
+                try {
+                    result[key] = JSON.parse(val);
+                } catch (e) {
+                    result[key] = val.substring(1, val.length - 1).split(',').map(s => s.trim().replace(/^"|"$/g, '').replace(/^'|'$/g, ''));
+                }
+            } else if (val === '') {
+                // Start of a bulleted list
+                currentField = key;
+                currentArray = [];
+                result[key] = [];
+            } else {
+                // Remove surrounding quotes
+                result[key] = val.replace(/^"|"$/g, '').replace(/^'|'$/g, '');
+                // Parse integer fields
+                if (/^\d+$/.test(result[key])) {
+                    result[key] = parseInt(result[key], 10);
+                }
             }
         }
-    });
+    }
 
     return {
         data: result,
