@@ -23,9 +23,11 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
 }) => {
     if (!isOpen || !project) return null;
 
-    const isOwner = currentUser && (
-        project.author_login?.toLowerCase() === currentUser.login?.toLowerCase() ||
-        project.author?.toLowerCase() === currentUser.name?.toLowerCase()
+    const activeUser = currentUser || { name: 'Guest Developer', login: 'guest', email: 'guest@campusconnect.edu' };
+    const isOwner = activeUser && (
+        (project.author_login && activeUser.login && project.author_login.toLowerCase() === activeUser.login.toLowerCase()) ||
+        (project.author && activeUser.name && project.author.toLowerCase() === activeUser.name.toLowerCase()) ||
+        (project.author_login && activeUser.email && project.author_login.toLowerCase() === activeUser.email.split('@')[0].toLowerCase())
     );
 
     // Scroll to Top logic

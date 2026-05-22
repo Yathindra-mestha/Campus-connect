@@ -240,108 +240,156 @@ const Projects: React.FC<ProjectsProps> = ({
           </div>
         ) : filteredProjects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
-            {filteredProjects.map((project, idx) => (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * (idx % 10) }}
-                key={project.id}
-              >
-                <Link
-                  to={`/projects/${project.slug}`}
-                  className="group relative rounded-[2rem] glass-card overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 flex flex-col h-full block"
+            {filteredProjects.map((project, idx) => {
+              const cardActiveUser = currentUser || { name: 'Guest Developer', login: 'guest', email: 'guest@campusconnect.edu' };
+              const cardIsOwner = cardActiveUser && (
+                (project.author_login && cardActiveUser.login && project.author_login.toLowerCase() === cardActiveUser.login.toLowerCase()) ||
+                (project.author && cardActiveUser.name && project.author.toLowerCase() === cardActiveUser.name.toLowerCase()) ||
+                (project.author_login && cardActiveUser.email && project.author_login.toLowerCase() === cardActiveUser.email.split('@')[0].toLowerCase())
+              );
+
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * (idx % 10) }}
+                  key={project.id}
                 >
-                  {/* Image Section */}
-                  <div className="h-64 overflow-hidden relative group/image p-2">
-                    <div className="absolute inset-2 rounded-[1.5rem] bg-slate-200 dark:bg-zinc-800 animate-pulse" />
-                    {project.image ? (
-                      <img
-                        src={optimizeImage(project.image, { width: 800 })}
-                        alt={project.title}
-                        className="w-full h-full object-cover rounded-[1.5rem] relative z-10 transition-transform duration-700 group-hover:scale-105"
-                        referrerPolicy="no-referrer"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20 rounded-[1.5rem] flex items-center justify-center relative z-10">
-                        <Github className="w-16 h-16 text-indigo-500/30" />
-                      </div>
-                    )}
-
-                    {/* Floating Like Badge */}
-                    <div className="absolute top-6 right-6 bg-white/90 dark:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5 shadow-lg z-20 transition-transform group-hover:scale-110">
-                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> {project.likes || 0}
-                    </div>
-                  </div>
-
-                  {/* Content Section */}
-                  <div className="p-8 pb-6 flex-1 flex flex-col relative z-20">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 mb-4 uppercase tracking-wider">
-                      <span className="text-indigo-600 dark:text-indigo-400">{project.branch}</span>
-                      <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-                      <span>{project.author}</span>
-                    </div>
-
-                    <h4 className="font-display font-bold text-2xl text-slate-900 dark:text-white mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
-                      {project.title}
-                    </h4>
-
-                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 mb-6 flex-1">
-                      {project.description}
-                    </p>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-8 mt-auto">
-                      {project.tags?.slice(0, 3).map(tag => (
-                        <span key={tag} className="px-3 py-1 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-xs font-medium border border-transparent dark:border-white/5 transition-colors group-hover:bg-slate-200 dark:group-hover:bg-white/10">
-                          {tag}
-                        </span>
-                      ))}
-                      {project.tags && project.tags.length > 3 && (
-                        <span className="px-3 py-1 rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs font-medium border border-transparent dark:border-white/5">
-                          +{project.tags.length - 3}
-                        </span>
+                  <Link
+                    to={`/projects/${project.slug}`}
+                    className="group relative rounded-[2rem] glass-card overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 flex flex-col h-full block"
+                  >
+                    {/* Image Section */}
+                    <div className="h-64 overflow-hidden relative group/image p-2">
+                      <div className="absolute inset-2 rounded-[1.5rem] bg-slate-200 dark:bg-zinc-800 animate-pulse" />
+                      {project.image ? (
+                        <img
+                          src={optimizeImage(project.image, { width: 800 })}
+                          alt={project.title}
+                          className="w-full h-full object-cover rounded-[1.5rem] relative z-10 transition-transform duration-700 group-hover:scale-105"
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20 rounded-[1.5rem] flex items-center justify-center relative z-10">
+                          <Github className="w-16 h-16 text-indigo-500/30" />
+                        </div>
                       )}
+
+                      {/* Floating Like Badge */}
+                      <div className="absolute top-6 right-6 bg-white/90 dark:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5 shadow-lg z-20 transition-transform group-hover:scale-110">
+                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> {project.likes || 0}
+                      </div>
                     </div>
 
-                    {/* Footer Stats & Actions */}
-                    <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5">
-                      <div className="flex items-center gap-4">
-                        {project.github_url ? (
-                          <a
-                            href={project.github_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 transition-colors shadow-sm"
-                            onClick={(e) => e.stopPropagation()}
-                            title="View Source"
-                          >
-                            <Github className="w-4 h-4" />
-                          </a>
-                        ) : (
-                          <span />
-                        )}
-
-
+                    {/* Content Section */}
+                    <div className="p-8 pb-6 flex-1 flex flex-col relative z-20">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 mb-4 uppercase tracking-wider">
+                        <span className="text-indigo-600 dark:text-indigo-400">{project.branch}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+                        <span>{project.author}</span>
                       </div>
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          navigate(`/projects/${project.slug}`);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-sm"
-                      >
-                        Read full story
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
+                      <h4 className="font-display font-bold text-2xl text-slate-900 dark:text-white mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
+                        {project.title}
+                      </h4>
+
+                      <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 mb-6 flex-1">
+                        {project.description}
+                      </p>
+
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-2 mb-8 mt-auto">
+                        {project.tags?.slice(0, 3).map(tag => (
+                          <span key={tag} className="px-3 py-1 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-xs font-medium border border-transparent dark:border-white/5 transition-colors group-hover:bg-slate-200 dark:group-hover:bg-white/10">
+                            {tag}
+                          </span>
+                        ))}
+                        {project.tags && project.tags.length > 3 && (
+                          <span className="px-3 py-1 rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs font-medium border border-transparent dark:border-white/5">
+                            +{project.tags.length - 3}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Footer Stats & Actions */}
+                      <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5">
+                        <div className="flex items-center gap-2">
+                          {project.github_url && (
+                            <a
+                              href={project.github_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 transition-colors shadow-sm"
+                              onClick={(e) => e.stopPropagation()}
+                              title="View Source"
+                            >
+                              <Github className="w-4 h-4" />
+                            </a>
+                          )}
+                          {cardIsOwner && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  setEditingProject(project);
+                                  setIsUploadModalOpen(true);
+                                }}
+                                className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 transition-all border border-indigo-100 dark:border-indigo-500/20 shadow-sm cursor-pointer"
+                                title="Edit Project"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  if (window.confirm('Are you sure you want to delete this project?')) {
+                                    try {
+                                      if (typeof window !== 'undefined') {
+                                        const localProjectsStr = localStorage.getItem('campusconnect_projects');
+                                        if (localProjectsStr) {
+                                          const currentProjects = JSON.parse(localProjectsStr);
+                                          const updatedProjects = currentProjects.filter((proj: ProjectData) => proj.slug !== project.slug && proj.id !== project.id);
+                                          localStorage.setItem('campusconnect_projects', JSON.stringify(updatedProjects));
+                                          setProjects(updatedProjects);
+                                        }
+                                      }
+                                      addToast('success', 'Project deleted successfully.');
+                                    } catch (err) {
+                                      console.error('Failed to delete project:', err);
+                                      addToast('error', 'Failed to delete project.');
+                                    }
+                                  }
+                                }}
+                                className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-500 transition-all border border-red-100 dark:border-red-500/20 shadow-sm cursor-pointer"
+                                title="Delete Project"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            navigate(`/projects/${project.slug}`);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-sm"
+                        >
+                          Read full story
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         ) : (
           <motion.div

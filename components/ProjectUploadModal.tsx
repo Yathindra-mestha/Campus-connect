@@ -67,14 +67,13 @@ const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose
 
         setIsSaving(true);
         try {
-            if (!currentUser) {
-                addToast('info', 'Project upload disabled in guest mode.');
-                onSuccess?.();
-                onClose();
-                return;
-            }
+            const activeUser = currentUser || {
+                name: 'Guest Developer',
+                login: 'guest',
+                email: 'guest@campusconnect.edu'
+            };
 
-            const username = currentUser.login || currentUser.email?.split('@')[0] || currentUser.name?.replace(/\s+/g, '').toLowerCase();
+            const username = activeUser.login || activeUser.email?.split('@')[0] || activeUser.name?.replace(/\s+/g, '').toLowerCase();
             
             if (typeof window !== 'undefined') {
                 const localProjectsStr = localStorage.getItem('campusconnect_projects');
@@ -117,7 +116,7 @@ const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose
                         github_url: formData.github_url,
                         image: formData.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800', // standard high-quality mockup cover
                         branch: formData.branch,
-                        author: currentUser.name,
+                        author: activeUser.name,
                         author_login: username,
                         likes: 0,
                         date: new Date().toLocaleDateString(),
