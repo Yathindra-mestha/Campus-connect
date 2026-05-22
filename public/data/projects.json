@@ -1,76 +1,82 @@
 [
   {
-    "id": "Vinayakahr10-campus-pioneer-smart-plant-monitor-v2.md",
-    "slug": "campus-pioneer-smart-plant-monitor-v2",
-    "author_login": "Vinayakahr10",
-    "author": "Vinayakahr10",
-    "title": "Campus Pioneer: Smart Plant Monitor v2",
-    "description": "A comprehensive IoT solution for monitoring plant health on campus, featuring atmospheric data logging and automated irrigation alerts.",
+    "id": "Yathindra-mestha-aerospace.md",
+    "slug": "aerospace",
+    "author_login": "Yathindra-mestha",
+    "author": "Yathindra",
+    "title": "AeroSpace: Autonomous Drone Delivery",
+    "description": "An autonomous aerial logistics system designed for swift, on-campus transport of emergency medical supplies and books, utilizing PX4 autopilot and obstacle avoidance vision algorithms.",
     "tags": [
-      "ESP32",
-      "IoT",
-      "Web Server",
-      "Sensors",
-      "DHT22"
+      "Robotics",
+      "Autopilot",
+      "OpenCV",
+      "ROS",
+      "C++"
     ],
     "branch": "ECE",
-    "image": "/images/students/Vinayakahr10/pioneer-system.png",
-    "github_url": "https://github.com/Vinayakahr10/campus-pioneer",
-    "date": "2026-02-26T17:49:49.365Z",
-    "body": ""
+    "image": "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80",
+    "github_url": "https://github.com/Yathindra-mestha/aerospace-drone",
+    "date": "2026-05-22T12:10:00.000Z",
+    "body": "# AeroSpace: High-Flyer Campus Logistics\n\nAeroSpace aims to revolutionize the way lightweight materials are moved around our large university campus. By leveraging low-altitude autonomous quadcopters, we can transport vital materials, such as emergency medical supplies, documents, and library books, in a fraction of the time required by traditional ground travel.\n\n## 🚁 System Architecture\n\nThe project consists of three core components working in unison:\n\n- **The Airframe**: A custom-built carbon fiber quadcopter powered by a Pixhawk 4 flight controller running the PX4 Autopilot stack.\n- **Onboard Companion Computer**: An NVIDIA Jetson Nano running ROS2 (Robot Operating System) handles real-time computer vision, obstacle avoidance, and path planning.\n- **Base Station Control Hub**: A web application developed to monitor flight telemetry, stream live video feeds, and handle automated package dispatching.\n\n## 🛠️ Computer Vision & Navigation\n\nFor navigation, the drone uses a combinations of GPS waypoints and visual inertia odometry (VIO) using an onboard stereo depth camera. Obstacle avoidance is driven by a localized OctoMap generated dynamically in real-time, allowing the drone to navigate around dynamic obstacles like trees, building corners, and other flyers.\n\n```cpp\n// ROS2 Node snippet for obstacle detection and hover override\nvoid ObstacleAvoidanceNode::sensorCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg) {\n    for (auto range : msg->ranges) {\n        if (range < CRITICAL_DISTANCE_THRESHOLD) {\n            triggerHoverOverride();\n            RCLCPP_WARN(this->get_logger(), \"Obstacle detected! Initiating emergency hover.\");\n            break;\n        }\n    }\n}\n```\n\n## 🔋 Autonomous Charging Stations\n\nTo ensure a continuous duty cycle, the quadcopters are designed to land autonomously on custom-engineered charging pads equipped with induction charging circuits. Using ArUco marker detection via a downward-facing camera, the drone achieves precision landing within a 2cm margin of error."
   },
   {
-    "id": "Vinayakahr10-nexus-ai.md",
-    "slug": "nexus-ai",
-    "author_login": "Vinayakahr10",
-    "author": "Vinayakahr10",
-    "title": "Nexus AI: Neural Network Visualizer",
-    "description": "A state-of-the-art neural network visualization tool that helps students understand deep learning architectures through interactive 3D graphs and real-time training feedback.",
+    "id": "Yathindra-mestha-codecraft.md",
+    "slug": "codecraft",
+    "author_login": "Yathindra-mestha",
+    "author": "Yathindra",
+    "title": "CodeCraft: Browser Sandbox IDE",
+    "description": "A full-featured collaborative development environment that runs completely in the browser. Features real-time multi-user editing, a sandboxed WebAssembly execution environment, and terminal emulation.",
     "tags": [
-      "AI",
-      "Machine Learning",
-      "Three.js",
-      "React"
+      "WebAssembly",
+      "React",
+      "WebRTC",
+      "Monaco Editor",
+      "Docker"
     ],
     "branch": "CSE",
-    "image": "/images/students/Vinayakahr10/nexus-ai.png",
-    "github_url": "https://github.com/Vinayakahr10/nexus-ai",
-    "date": "2026-02-26T21:30:00.000Z",
-    "body": "# Nexus AI: Exploring the Neural Frontier\r\n\r\nWelcome to the future of AI education. Nexus AI is built to bridge the gap between abstract mathematical models and intuitive understanding.\r\n\r\n## 🚀 Key Features\r\n- **Real-time 3D Rendering**: Watch neurons fire as training data passes through the network.\r\n- **Dynamic Architecture**: Build your own models using a drag-and-drop interface.\r\n- **Live Training Statistics**: Monitor loss and accuracy curves in high definition.\r\n\r\n## 🛠️ How it Works (Tutorial)\r\n\r\n### 1. Setting Up Your First Network\r\nTo begin, click the \"+\" button in the architecture panel. You can add:\r\n- `Input Layers` (Automatic shape detection)\r\n- `Hidden Layers` (Select activation: ReLU, Tanh, Sigmoid)\r\n- `Output Layers` (Softmax or Linear)\r\n\r\n### 2. Importing Data\r\nNexus AI supports `.json` and `.csv` datasets. Simply drag your file into the viewport to begin preprocessing.\r\n\r\n### 3. Visualizing Weights\r\nHover over any connection to see the current weight value. A **thick, solid line** represents a high positive weight, while a **dashed red line** indicates a negative weight.\r\n\r\n```javascript\r\n// Sample configuration for a simple XOR network\r\nconst model = new Nexus.Model({\r\n  layers: [2, 4, 1],\r\n  activation: 'relu',\r\n  optimizer: 'adam'\r\n});\r\n\r\nmodel.train(data);\r\n```\r\n\r\n## 📈 Future Roadmap\r\n- Integration with PyTorch and TensorFlow exports.\r\n- Collaborative training sessions via WebRTC.\r\n- VR mode for immersive structure analysis."
+    "image": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
+    "github_url": "https://github.com/Yathindra-mestha/codecraft-ide",
+    "date": "2026-05-22T12:15:00.000Z",
+    "body": "# CodeCraft: Next-Generation Collaborative IDE\n\nCodeCraft breaks down the barrier between local and browser-based coding environment. Built as a zero-setup collaborative editor, CodeCraft lets developers pair-program synchronously in real-time, execute their code securely inside sandboxed environments, and manage files without ever leaving their browser window.\n\n## 💻 Tech Stack & Architecture\n\n- **Real-Time Collaboration**: Utilizes WebRTC and Yjs (Conflict-Free Replicated Data Types, or CRDTs) to sync keystrokes and editor selections with sub-10ms latency.\n- **Wasm Sandbox**: Code execution runs securely in a sandboxed WebAssembly engine (using Pyodide and native Wasm toolchains), executing code completely client-side without relying on a remote backend.\n- **Professional Monaco Editor**: Integrates the same core editor that powers VS Code, providing native autocomplete, error highlighting, and code folding.\n\n## 🚀 Key Implementation Details\n\n### Client-Side File System\nCodeCraft utilizes the modern **Origin Private File System (OPFS)** API, allowing highly efficient, low-latency browser storage that acts just like a real operating system disk.\n\n```typescript\n// Initializing a secure browser-side file handle\nasync function getFileHandle(fileName: string) {\n  const root = await navigator.storage.getDirectory();\n  const fileHandle = await root.getFileHandle(fileName, { create: true });\n  return fileHandle;\n}\n```\n\n### Collaborative WebRTC Signalling\nWhen pair-programming, peers establish direct P2P connections to synchronize documents. In the event WebRTC is blocked by a university firewalls, the editor seamlessly falls back to secure WebSocket synchronization using a redundant central signaling server."
   },
   {
     "id": "Yathindra-mestha-eco-track.md",
     "slug": "eco-track",
     "author_login": "Yathindra-mestha",
     "author": "Yathindra",
-    "title": "EcoTrack: Sustainability Monitor",
-    "description": "An IoT-powered dashboard that tracks campus energy consumption and waste management in real-time, providing actionable insights for a greener university.",
+    "title": "EcoTrack: Smart Green Grid",
+    "description": "A comprehensive IoT dashboard that aggregates real-time data from campus-wide sensor meshes. Monitors power consumption, water usage, and environmental telemetry to drive carbon reduction.",
     "tags": [
       "IoT",
       "Sustainability",
-      "Data Vision",
-      "Node.js"
+      "Node.js",
+      "MQTT",
+      "Grafana"
     ],
     "branch": "Environmental Engineering",
-    "image": "/images/students/Yathindra-mestha/eco-track.png",
+    "image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
     "github_url": "https://github.com/Yathindra-mestha/eco-track",
-    "date": "2026-02-26T21:35:00.000Z",
-    "body": "# EcoTrack: Saving the Planet, One Data Point at a Time\r\n\r\nEcoTrack is more than just a dashboard; it's a call to action for every student on campus to participate in our sustainability goals.\r\n\r\n## 🌿 Technical Overview\r\nOur system utilizes a mesh network of ESP32 sensors placed in every building to monitor:\r\n- **Electricity Usage** (Amperage & Voltage)\r\n- **Water Flow** (Identifying leaks in real-time)\r\n- **Waste Bin Status** (Optimizing collection routes)\r\n\r\n## 📖 Deployment Guide\r\n\r\n### Hardware Requirements\r\n- ESP32 Microcontroller\r\n- SCT-013 Current Sensor\r\n- HC-SR04 Ultrasonic Sensor (for bin levels)\r\n\r\n### Software Setup\r\n1. Clone the repository and install dependencies.\r\n2. Configure your `config.env` with your MQTT broker credentials.\r\n3. Pulse your sensors to the gateway.\r\n\r\n```bash\r\n# Start the EcoTrack local gateway\r\nnpm install\r\nnpm run start:gateway\r\n```\r\n\r\n## 🏆 Project Impact\r\nSince its deployment in the Main Campus Hall, we have seen a **12% reduction** in idle energy waste and identified **3 major water leaks** within the first week.\r\n\r\n---\r\n\r\n*Join our mission to create a carbon-neutral campus by 2030.*"
+    "date": "2026-05-22T12:05:00.000Z",
+    "body": "# EcoTrack: Saving the Planet, One Data Point at a Time\n\nEcoTrack is more than just a data dashboard; it's a real-time smart grid solution designed to optimize resource usage and drive campus-wide sustainability. Built on top of a resilient ESP32 mesh network, the system tracks key utility consumption metrics and provides automated alert notifications.\n\n## 🌿 Technical Overview\n\nOur sensor grid is deployed across major university buildings, featuring customized firmware that broadcasts telemetry data to a central MQTT broker:\n\n- **Electricity Monitoring**: Non-invasive SCT-013 current transformers measure real-time amperage and calculate active power.\n- **Water Management**: Ultrasonic flow sensors detect unusual water activity and identify leaks in under-floor plumbing.\n- **Waste Bin Status**: Ultrasonic rangefinders monitor bin capacity, optimizing waste collection routes and schedule efficiency.\n\n## 📖 Deployment Guide\n\n### Hardware Requirements\n- **Microcontrollers**: ESP32 NodeMCU development boards\n- **Sensors**: SCT-013 Current Sensors, YF-S201 Water Flow Sensors, and HC-SR04 Ultrasonic Sensors\n- **Gateway**: Raspberry Pi 4 (or any local server running Node.js)\n\n### Software Setup\n1. Clone the repository and install project dependencies:\n   ```bash\n   git clone https://github.com/Yathindra-mestha/eco-track.git\n   cd eco-track\n   npm install\n   ```\n2. Configure your environmental variables in a `.env` file with your MQTT broker credentials.\n3. Launch the local gateway to stream sensor packets:\n   ```bash\n   npm run start:gateway\n   ```\n\n## 🏆 Project Impact\n\nSince its initial pilot deployment in the Main Campus Hall, EcoTrack has successfully:\n- Reduced **idle energy waste by 14%** through smart lighting automation triggers.\n- Detected **4 major water leaks** in real-time, saving thousands of gallons of municipal water.\n- Optimized garbage truck dispatch frequency, resulting in a **20% decrease** in campus carbon footprint."
   },
   {
-    "id": "Yathindra-mestha-q.md",
-    "slug": "q",
+    "id": "Yathindra-mestha-nexus-ai.md",
+    "slug": "nexus-ai",
     "author_login": "Yathindra-mestha",
     "author": "Yathindra",
-    "title": "q",
-    "description": "q\\n",
+    "title": "Nexus AI: Neural Network Visualizer",
+    "description": "An interactive, browser-based 3D neural network visualizer built using Three.js and React. It allows users to build, train, and inspect feedforward networks in real-time with dynamic node activation styling.",
     "tags": [
-      "q"
+      "AI",
+      "Machine Learning",
+      "Three.js",
+      "React",
+      "WebGL"
     ],
     "branch": "CSE",
-    "image": "",
-    "github_url": "",
-    "date": "2026-03-01T10:58:54.198Z",
-    "body": ""
+    "image": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80",
+    "github_url": "https://github.com/Yathindra-mestha/nexus-ai",
+    "date": "2026-05-22T12:00:00.000Z",
+    "body": "# Nexus AI: Exploring the Neural Frontier\n\nWelcome to the future of AI education. Nexus AI is built to bridge the gap between abstract mathematical models and intuitive visual understanding. By rendering deep neural networks in fully interactive 3D, students and developers can inspect the inner workings of machine learning models during training cycles.\n\n## 🚀 Key Features\n\n- **Real-Time 3D Rendering**: Watch neurons fire as training data passes through the network. Node brightness dynamically matches activation levels.\n- **Dynamic Architecture Editor**: Build your own models using an intuitive drag-and-drop layer builder. Adjust neurons per layer and choose activation functions instantly.\n- **Live Training Statistics**: Monitor loss and accuracy curves in high definition alongside the 3D graph representation.\n- **Interactive Weight Visualizer**: Hover over individual synapses to see their current weight value. Thick, glowing lines represent positive weights, while dashed red lines indicate negative weights.\n\n## 🛠️ How It Works\n\n### 1. Setting Up Your First Network\nTo begin, click the **\"+\"** button in the architecture panel. You can add and configure:\n- **Input Layers**: Automatic shape detection based on dataset choice.\n- **Hidden Layers**: Select custom activation functions per layer (e.g., *ReLU*, *Tanh*, *Sigmoid*, or *ELU*).\n- **Output Layers**: Customize for classification (e.g., *Softmax*) or regression tasks.\n\n### 2. Importing Data\nNexus AI supports standard `.json` and `.csv` datasets. Simply drag your file into the viewport to begin automated preprocessing and feature scaling.\n\n```javascript\n// Sample configuration for a simple XOR network\nconst model = new Nexus.Model({\n  layers: [2, 4, 1],\n  activation: 'relu',\n  optimizer: 'adam'\n});\n\nmodel.train(dataset);\n```\n\n## 📈 Future Roadmap\n\n- **Framework Exports**: Generate ready-to-run PyTorch and TensorFlow code directly from your visual model design.\n- **Collaborative Training**: Train models collaboratively with peers in real-time using WebRTC synchronization.\n- **VR Immersive Mode**: Step inside your neural network architecture with WebXR integration for fully immersive model inspection."
   }
 ]
