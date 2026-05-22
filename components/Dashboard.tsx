@@ -7,7 +7,6 @@ import {
     MessageSquare, Trash2, Settings, Loader2
 } from 'lucide-react';
 import { githubService, ProjectData } from '../utils/github';
-import { supabase } from '../src/lib/supabaseClient';
 
 const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handleNavigate: (path: string) => void; onProfileUpdate?: () => void }) => {
     const [userProjects, setUserProjects] = useState<ProjectData[]>([]);
@@ -38,21 +37,29 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user?.id) return;
+        if (!user) return;
+        const userId = user.id || user.email;
+        if (!userId) return;
 
         try {
-            const { error } = await supabase
-                .from('users')
-                .update({
-                    name: editData.name,
-                    branch: editData.branch,
-                    avatar_url: editData.avatar_url,
-                    linkedin_url: editData.linkedin_url,
-                    github_url: editData.github_url
-                })
-                .eq('id', user.id);
+            const updatedUser = {
+                ...user,
+                name: editData.name,
+                branch: editData.branch,
+                avatar_url: editData.avatar_url,
+                linkedin_url: editData.linkedin_url,
+                github_url: editData.github_url
+            };
 
-            if (error) throw error;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('googleUser', JSON.stringify(updatedUser));
+                
+                const localUsersStr = localStorage.getItem('campusconnect_users') || '{}';
+                const localUsers = JSON.parse(localUsersStr);
+                localUsers[userId] = updatedUser;
+                localStorage.setItem('campusconnect_users', JSON.stringify(localUsers));
+            }
+
             setIsEditing(false);
             if (onProfileUpdate) onProfileUpdate();
         } catch (err) {
@@ -61,16 +68,21 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
     };
 
     const fetchUserPosts = async () => {
-        if (!user?.id) return;
+        const userId = user?.id || user?.email;
+        if (!userId) return;
         try {
-            const { data, error } = await supabase
-                .from('posts')
-                .select('*')
-                .eq('author_id', user.id)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setUserPosts(data || []);
+            if (typeof window !== 'undefined') {
+                const localDiscussionsStr = localStorage.getItem('campusconnect_discussions');
+                if (localDiscussionsStr) {
+                    const allDiscussions = JSON.parse(localDiscussionsStr);
+                    const userP = allDiscussions.filter(
+                        (p: any) => p.author_id === userId || p.author_id === user.id || p.author_id === user.login
+                    );
+                    setUserPosts(userP);
+                    return;
+                }
+            }
+            setUserPosts([]);
         } catch (err) {
             console.error('Error fetching user posts:', err);
         }
@@ -80,13 +92,15 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
         if (!window.confirm('Are you sure you want to delete this post?')) return;
         setIsDeletingPost(postId);
         try {
-            const { error } = await supabase
-                .from('posts')
-                .delete()
-                .eq('id', postId);
-
-            if (error) throw error;
-            setUserPosts(userPosts.filter(p => p.id !== postId));
+            if (typeof window !== 'undefined') {
+                const localDiscussionsStr = localStorage.getItem('campusconnect_discussions');
+                if (localDiscussionsStr) {
+                    const allDiscussions = JSON.parse(localDiscussionsStr);
+                    const updatedDiscussions = allDiscussions.filter((p: any) => p.id !== postId);
+                    localStorage.setItem('campusconnect_discussions', JSON.stringify(updatedDiscussions));
+                    setUserPosts(userPosts.filter(p => p.id !== postId));
+                }
+            }
         } catch (err) {
             console.error('Error deleting post:', err);
             alert('Failed to delete post');

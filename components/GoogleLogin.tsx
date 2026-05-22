@@ -1,6 +1,5 @@
 import React, { useEffect, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase, getSupabaseConfig } from '../src/lib/supabaseClient';
 import { ENV_CONFIG } from '../src/constants/config';
 
 // Declaration for google accounts id
@@ -41,51 +40,34 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
     const handleCredentialResponse = async (response: any) => {
         const userData = decodeJWT(response.credential);
         if (userData) {
-            // Sign in with Supabase using the ID token
-            const { data, error } = await supabase.auth.signInWithIdToken({
-                provider: 'google',
-                token: response.credential,
-            });
-
-            if (error) {
-                console.error('Supabase auth error:', error);
-                let friendlyMessage = error.message;
-
-                // Specifically check for common credential/config issues
-                if (friendlyMessage === "Failed to fetch") {
-                    const config = getSupabaseConfig();
-                    const buildTime = new Date().toLocaleTimeString();
-                    friendlyMessage = `Network Error (Failed to fetch). 
-[Build Time: ${buildTime}]
-Diagnostics:
-- URL: ${config.url.substring(0, 25)}... ${config.isUrlPlaceholder ? '(PLACEHOLDER)' : '(OK)'}
-- Key: ${config.key.substring(0, 15)}... ${config.isKeyPlaceholder ? '(PLACEHOLDER)' : '(OK)'}
-Check your Vercel Environment Variables!`;
-                } else if (error.status === 400 || error.message.includes('apiKey') || error.message.includes('JWT')) {
-                    friendlyMessage = "Configuration error: Invalid Supabase API Key or Google Auth not enabled in Supabase.";
-                } else if (error.message.includes('provider')) {
-                    friendlyMessage = "Google Auth is not enabled in your Supabase project.";
-                } else if (error.message.includes('authorized domain')) {
-                    friendlyMessage = "This domain is not authorized for Google Login in Supabase.";
-                }
-
-                if (onLoginFailure) onLoginFailure(friendlyMessage);
-                alert(`Login Failed: ${friendlyMessage}`);
-                return;
-            }
-
+            // No Supabase token exchange needed! Decode and set local session
+            const username = userData.email.split('@')[0] || userData.name.toLowerCase().replace(/\s+/g, '');
             const userInfo = {
+                id: userData.sub || userData.email,
                 name: userData.name,
                 email: userData.email,
                 picture: userData.picture,
-                login: userData.email, // Use email as login for consistency
+                login: username, // Use username parsed from email
                 avatar_url: userData.picture,
-                supabase_user: data.user
+                branch: 'Computer Science • CSE', // Default mock branch
+                linkedin_url: '',
+                github_url: `https://github.com/${username}`
             };
 
-            // Note: App.tsx will eventually handle the session from Supabase
-            // but we keep this for backward compatibility during transition
             localStorage.setItem('googleUser', JSON.stringify(userInfo));
+
+            // Sync user details to local users registry
+            if (typeof window !== 'undefined') {
+                try {
+                    const localUsersStr = localStorage.getItem('campusconnect_users') || '{}';
+                    const localUsers = JSON.parse(localUsersStr);
+                    localUsers[userInfo.id] = userInfo;
+                    localStorage.setItem('campusconnect_users', JSON.stringify(localUsers));
+                } catch (e) {
+                    console.error('Failed to sync to local user database', e);
+                }
+            }
+
             onLoginSuccess(userInfo);
             navigate('/profile');
         } else {

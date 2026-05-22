@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin, Mail, Github, Linkedin, ArrowLeft, User } from 'lucide-react';
-import { supabase } from '../src/lib/supabaseClient';
+import { githubService } from '../utils/github';
 
 const PublicProfile = () => {
     const { id } = useParams<{ id: string }>();
@@ -14,14 +14,43 @@ const PublicProfile = () => {
         const fetchProfile = async () => {
             if (!id) return;
             try {
-                const { data, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('id', id)
-                    .single();
+                // First try: query static leaderboard
+                const staticMembers = await githubService.getLeaderboard();
+                const matchedMember = staticMembers.find(
+                    (m: any) => m.login?.toLowerCase() === id.toLowerCase() || m.name?.toLowerCase() === id.toLowerCase()
+                );
 
-                if (data && !error) {
-                    setProfile(data);
+                if (matchedMember) {
+                    setProfile({
+                        id: matchedMember.login,
+                        name: matchedMember.name,
+                        branch: matchedMember.branch,
+                        avatar_url: matchedMember.avatar_url,
+                        github_url: matchedMember.login ? `https://github.com/${matchedMember.login}` : '',
+                        linkedin_url: '',
+                        email: `${matchedMember.login}@campusconnect.edu`,
+                        created_at: matchedMember.last_active_at || new Date().toISOString()
+                    });
+                    return;
+                }
+
+                // Second try: query localStorage registered users
+                if (typeof window !== 'undefined') {
+                    const localUsersStr = localStorage.getItem('campusconnect_users');
+                    if (localUsersStr) {
+                        const localUsers = JSON.parse(localUsersStr);
+                        // Find user by id, email, or login
+                        const foundUser = Object.values(localUsers).find(
+                            (u: any) =>
+                                u.id === id ||
+                                u.login?.toLowerCase() === id.toLowerCase() ||
+                                u.email?.toLowerCase() === id.toLowerCase()
+                        );
+                        if (foundUser) {
+                            setProfile(foundUser);
+                            return;
+                        }
+                    }
                 }
             } catch (err) {
                 console.error('Error fetching public profile:', err);

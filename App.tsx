@@ -45,7 +45,6 @@ import {
 import { githubService } from './utils/github';
 import Home from './components/Home';
 import GoogleLogin from './components/GoogleLogin';
-import { supabase } from './src/lib/supabaseClient';
 import { useAuth } from './src/hooks/useAuth';
 import { useToast } from './src/hooks/useToast';
 import { ENV_CONFIG } from './src/constants/config';
@@ -272,7 +271,6 @@ const App = () => {
               addToast('success', `Welcome back, ${userData.name}!`);
             }}
             onLogout={async () => {
-              await supabase.auth.signOut();
               localStorage.removeItem('googleUser');
               setUser(null);
               addToast('info', 'Logged out successfully');
@@ -426,7 +424,6 @@ const App = () => {
                               <div className="p-2 border-t border-white/5">
                                 <button
                                   onClick={async () => {
-                                    await supabase.auth.signOut();
                                     localStorage.removeItem('googleUser');
                                     setUser(null);
                                     setIsDesktopProfileOpen(false);

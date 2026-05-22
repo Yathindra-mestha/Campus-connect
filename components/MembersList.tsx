@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, ExternalLink, User } from 'lucide-react';
-import { supabase } from '../src/lib/supabaseClient';
+import { githubService } from '../utils/github';
 import { Link } from 'react-router-dom';
 
 const MembersList = () => {
@@ -12,14 +12,53 @@ const MembersList = () => {
     useEffect(() => {
         const fetchMembers = async () => {
             try {
-                const { data, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+                // Fetch student directory data
+                const staticMembers = await githubService.getLeaderboard();
 
-                if (data && !error) {
-                    setMembers(data);
+                // Fetch registered/edited users in local storage
+                let localUsers: any[] = [];
+                if (typeof window !== 'undefined') {
+                    const localUsersStr = localStorage.getItem('campusconnect_users');
+                    if (localUsersStr) {
+                        try {
+                            const parsed = JSON.parse(localUsersStr);
+                            localUsers = Object.values(parsed);
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
                 }
+
+                // Merge directories, prioritizing local edits/accounts
+                const mergedMap = new Map();
+
+                // Add static contributors first
+                staticMembers.forEach((member: any) => {
+                    const identifier = member.login || member.id;
+                    mergedMap.set(identifier, {
+                        id: identifier,
+                        name: member.name,
+                        branch: member.branch || 'General Member',
+                        avatar_url: member.avatar_url,
+                        email: `${member.login}@campusconnect.edu`,
+                        created_at: member.last_active_at || new Date().toISOString()
+                    });
+                });
+
+                // Add or overwrite with local accounts
+                localUsers.forEach((user: any) => {
+                    const identifier = user.login || user.id || user.email;
+                    mergedMap.set(identifier, {
+                        id: identifier,
+                        name: user.name,
+                        branch: user.branch || 'General Member',
+                        avatar_url: user.avatar_url,
+                        email: user.email,
+                        created_at: user.created_at || new Date().toISOString()
+                    });
+                });
+
+                setMembers(Array.from(mergedMap.values()));
             } catch (err) {
                 console.error('Error fetching members:', err);
             } finally {

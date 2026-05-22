@@ -21,7 +21,6 @@ import {
   Github,
   Loader2
 } from 'lucide-react';
-import { supabase, getSupabaseConfig } from '../src/lib/supabaseClient';
 
 const CHANNELS = [
   { id: 'global', name: 'global-chat', description: 'Public discussion for everyone' },
@@ -138,36 +137,39 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
 
   const activeChannel = CHANNELS.find(c => c.id === activeTab);
 
-  // Fetch discussions from Supabase, fallback to high-quality mock discussions
+  // Read active user helper
+  const getActiveUser = () => {
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('googleUser');
+      if (userStr) {
+        try {
+          return JSON.parse(userStr);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    return null;
+  };
+
+  // Fetch discussions from local storage, fallback to high-quality mock discussions
   const fetchDiscussions = async () => {
     setIsLoadingDiscussions(true);
-    
-    // Check if Supabase configuration is missing or placeholder
-    const config = getSupabaseConfig();
-    if (config.isUrlPlaceholder || config.isKeyPlaceholder) {
-      console.warn("Supabase is not configured. Loading offline/demo discussions.");
-      setDiscussions(MOCK_DISCUSSIONS);
-      setIsLoadingDiscussions(false);
-      return;
-    }
-
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDiscussions(data || []);
+      if (typeof window !== 'undefined') {
+        const localDiscussionsStr = localStorage.getItem('campusconnect_discussions');
+        if (localDiscussionsStr) {
+          setDiscussions(JSON.parse(localDiscussionsStr));
+        } else {
+          localStorage.setItem('campusconnect_discussions', JSON.stringify(MOCK_DISCUSSIONS));
+          setDiscussions(MOCK_DISCUSSIONS);
+        }
+      } else {
+        setDiscussions(MOCK_DISCUSSIONS);
+      }
     } catch (err) {
       console.error('Error fetching discussions:', err);
       setDiscussions(MOCK_DISCUSSIONS);
-      
-      // Prevent duplicate toast triggers (e.g. from React 18/19 double-useEffect mounts in dev)
-      if (!hasShownErrorRef.current) {
-        addToast('info', 'Loaded demo discussions');
-        hasShownErrorRef.current = true;
-      }
     } finally {
       setIsLoadingDiscussions(false);
     }
@@ -218,24 +220,39 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
 
     setIsSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const activeUser = getActiveUser();
+      const authorName = activeUser ? activeUser.name : 'Anonymous Student';
+      const authorId = activeUser ? (activeUser.id || activeUser.email) : 'anonymous';
+      const authorBranch = activeUser ? (activeUser.branch || 'General') : 'General';
 
-      const { error } = await supabase
-        .from('posts')
-        .insert([{
-          title: newPost.title,
-          content: newPost.content,
-          category: newPost.category.toLowerCase(),
-          tags: newPost.tags.split(',').map(t => t.trim()).filter(t => t),
-          author: user.user_metadata.full_name || user.email,
-          author_id: user.id,
-          branch: user.user_metadata.branch || 'General',
-          likes: 0,
-          replies: 0
-        }]);
+      const newPostEntry: Discussion = {
+        id: `post-${Date.now()}`,
+        title: newPost.title,
+        content: newPost.content,
+        category: newPost.category.toLowerCase(),
+        tags: newPost.tags.split(',').map(t => t.trim()).filter(t => t),
+        author: authorName,
+        author_id: authorId,
+        branch: authorBranch,
+        created_at: new Date().toISOString(),
+        likes: 0,
+        replies: 0
+      };
 
-      if (error) throw error;
+      if (typeof window !== 'undefined') {
+        const localDiscussionsStr = localStorage.getItem('campusconnect_discussions');
+        let currentDiscussions = MOCK_DISCUSSIONS;
+        if (localDiscussionsStr) {
+          try {
+            currentDiscussions = JSON.parse(localDiscussionsStr);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        const updatedDiscussions = [newPostEntry, ...currentDiscussions];
+        localStorage.setItem('campusconnect_discussions', JSON.stringify(updatedDiscussions));
+      }
 
       addToast('success', 'Post published successfully!');
       setIsNewPostModalOpen(false);
