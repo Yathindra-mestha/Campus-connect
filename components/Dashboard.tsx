@@ -135,17 +135,24 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
             }
 
             try {
-                let allProjects: ProjectData[] = [];
+                const staticProjects = await githubService.getAllProjects();
+                let allProjects = staticProjects;
+
                 if (typeof window !== 'undefined') {
                     const localProjectsStr = localStorage.getItem('campusconnect_projects');
                     if (localProjectsStr) {
-                        allProjects = JSON.parse(localProjectsStr);
+                        try {
+                            const localProjects = JSON.parse(localProjectsStr);
+                            const userCreatedProjects = localProjects.filter((p: any) => p.id && String(p.id).startsWith('project-'));
+
+                            allProjects = [...userCreatedProjects, ...staticProjects];
+                            localStorage.setItem('campusconnect_projects', JSON.stringify(allProjects));
+                        } catch (e) {
+                            localStorage.setItem('campusconnect_projects', JSON.stringify(staticProjects));
+                        }
                     } else {
-                        allProjects = await githubService.getAllProjects();
-                        localStorage.setItem('campusconnect_projects', JSON.stringify(allProjects));
+                        localStorage.setItem('campusconnect_projects', JSON.stringify(staticProjects));
                     }
-                } else {
-                    allProjects = await githubService.getAllProjects();
                 }
 
                 const [leaderboard] = await Promise.all([

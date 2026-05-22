@@ -39,19 +39,29 @@ const Projects: React.FC<ProjectsProps> = ({
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
+      const staticProjects = await githubService.getAllProjects();
+      let finalProjects = staticProjects;
+
       if (typeof window !== 'undefined') {
         const localProjectsStr = localStorage.getItem('campusconnect_projects');
         if (localProjectsStr) {
-          setProjects(JSON.parse(localProjectsStr));
+          try {
+            const localProjects = JSON.parse(localProjectsStr) as ProjectData[];
+            // Filter to keep only user-created custom projects (whose IDs start with 'project-')
+            const userCreatedProjects = localProjects.filter(p => p.id && String(p.id).startsWith('project-'));
+
+            // Force-upgrade all static projects to the new premium ones from projects.json
+            finalProjects = [...userCreatedProjects, ...staticProjects];
+            localStorage.setItem('campusconnect_projects', JSON.stringify(finalProjects));
+          } catch (e) {
+            console.error('Error parsing local projects, resetting to static ones:', e);
+            localStorage.setItem('campusconnect_projects', JSON.stringify(staticProjects));
+          }
         } else {
-          const data = await githubService.getAllProjects();
-          localStorage.setItem('campusconnect_projects', JSON.stringify(data));
-          setProjects(data);
+          localStorage.setItem('campusconnect_projects', JSON.stringify(staticProjects));
         }
-      } else {
-        const data = await githubService.getAllProjects();
-        setProjects(data);
       }
+      setProjects(finalProjects);
     } catch (error) {
       console.error('Failed to fetch projects', error);
       addToast('error', 'Failed to load projects. Please try again later.');
