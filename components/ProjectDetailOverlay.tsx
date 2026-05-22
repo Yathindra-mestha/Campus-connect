@@ -10,6 +10,7 @@ interface ProjectDetailOverlayProps {
     project: ProjectData | null;
     onEdit?: (project: ProjectData) => void;
     onDelete?: (project: ProjectData) => void;
+    currentUser?: any;
 }
 
 const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
@@ -17,9 +18,15 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
     onClose,
     project,
     onEdit,
-    onDelete
+    onDelete,
+    currentUser
 }) => {
     if (!isOpen || !project) return null;
+
+    const isOwner = currentUser && (
+        project.author_login?.toLowerCase() === currentUser.login?.toLowerCase() ||
+        project.author?.toLowerCase() === currentUser.name?.toLowerCase()
+    );
 
     // Scroll to Top logic
     const mainContentRef = React.useRef<HTMLDivElement>(null);
@@ -71,9 +78,29 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {isOwner && (
+                        <>
+                            <button
+                                onClick={() => onEdit?.(project)}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all text-sm cursor-pointer"
+                                title="Edit Project"
+                            >
+                                <Pencil className="w-4 h-4" />
+                                <span className="hidden sm:inline">Edit</span>
+                            </button>
+                            <button
+                                onClick={() => onDelete?.(project)}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-400 rounded-xl font-bold hover:bg-red-100 dark:hover:bg-red-500/20 transition-all text-sm cursor-pointer"
+                                title="Delete Project"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                <span className="hidden sm:inline">Delete</span>
+                            </button>
+                        </>
+                    )}
                     <button
                         onClick={onClose}
-                        className="p-2.5 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                        className="p-2.5 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all cursor-pointer"
                     >
                         <X className="w-5 h-5" />
                     </button>

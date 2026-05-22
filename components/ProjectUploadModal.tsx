@@ -74,8 +74,61 @@ const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose
                 return;
             }
 
-            // Allow project creation mock
-            addToast('success', 'Project created successfully! (Mocked since no backend)');
+            const username = currentUser.login || currentUser.email?.split('@')[0] || currentUser.name?.replace(/\s+/g, '').toLowerCase();
+            
+            if (typeof window !== 'undefined') {
+                const localProjectsStr = localStorage.getItem('campusconnect_projects');
+                let currentProjects: ProjectData[] = [];
+                if (localProjectsStr) {
+                    try {
+                        currentProjects = JSON.parse(localProjectsStr);
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+
+                if (isEditing && project) {
+                    // Update existing project
+                    const updatedProjects = currentProjects.map((p) => {
+                        if (p.slug === project.slug || p.id === project.id) {
+                            return {
+                                ...p,
+                                title: formData.title,
+                                description: formData.description,
+                                tags: formData.tags,
+                                github_url: formData.github_url,
+                                image: formData.image,
+                                branch: formData.branch,
+                                date: new Date().toLocaleDateString()
+                            };
+                        }
+                        return p;
+                    });
+                    localStorage.setItem('campusconnect_projects', JSON.stringify(updatedProjects));
+                    addToast('success', 'Project updated successfully!');
+                } else {
+                    // Create new project
+                    const newProj: ProjectData = {
+                        id: `project-${Date.now()}`,
+                        slug: formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now(),
+                        title: formData.title,
+                        description: formData.description,
+                        tags: formData.tags,
+                        github_url: formData.github_url,
+                        image: formData.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800', // standard high-quality mockup cover
+                        branch: formData.branch,
+                        author: currentUser.name,
+                        author_login: username,
+                        likes: 0,
+                        date: new Date().toLocaleDateString(),
+                        body: `## About ${formData.title}\n\n${formData.description}\n\n## Core Technologies\n\n${formData.tags.map(t => `- ${t}`).join('\n')}\n\n## Getting Started\n\nTo run this project locally, clone the repository and run the setup scripts.\n\n\`\`\`bash\ngit clone ${formData.github_url || 'https://github.com/example/repo'}\ncd project\nnpm install\nnpm run dev\n\`\`\``
+                    };
+                    const updatedProjects = [newProj, ...currentProjects];
+                    localStorage.setItem('campusconnect_projects', JSON.stringify(updatedProjects));
+                    addToast('success', 'Project created successfully!');
+                }
+            }
+
             onSuccess?.();
             onClose();
         } catch (error: any) {

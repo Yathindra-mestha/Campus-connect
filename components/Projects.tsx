@@ -39,8 +39,19 @@ const Projects: React.FC<ProjectsProps> = ({
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
-      const data = await githubService.getAllProjects();
-      setProjects(data);
+      if (typeof window !== 'undefined') {
+        const localProjectsStr = localStorage.getItem('campusconnect_projects');
+        if (localProjectsStr) {
+          setProjects(JSON.parse(localProjectsStr));
+        } else {
+          const data = await githubService.getAllProjects();
+          localStorage.setItem('campusconnect_projects', JSON.stringify(data));
+          setProjects(data);
+        }
+      } else {
+        const data = await githubService.getAllProjects();
+        setProjects(data);
+      }
     } catch (error) {
       console.error('Failed to fetch projects', error);
       addToast('error', 'Failed to load projects. Please try again later.');
@@ -145,6 +156,7 @@ const Projects: React.FC<ProjectsProps> = ({
             <ProjectDetailRouteWrapper
               projects={projects}
               isLoading={isLoading}
+              currentUser={currentUser}
               onEdit={(p: ProjectData) => {
                 navigate('/projects');
                 setEditingProject(p);
@@ -152,7 +164,22 @@ const Projects: React.FC<ProjectsProps> = ({
               }}
               onDelete={async (p: ProjectData) => {
                 if (window.confirm('Are you sure you want to delete this project?')) {
-                  addToast('info', 'Project deletion requires manual removal from github.');
+                  try {
+                    if (typeof window !== 'undefined') {
+                      const localProjectsStr = localStorage.getItem('campusconnect_projects');
+                      if (localProjectsStr) {
+                        const currentProjects = JSON.parse(localProjectsStr);
+                        const updatedProjects = currentProjects.filter((proj: ProjectData) => proj.slug !== p.slug && proj.id !== p.id);
+                        localStorage.setItem('campusconnect_projects', JSON.stringify(updatedProjects));
+                        setProjects(updatedProjects);
+                      }
+                    }
+                    addToast('success', 'Project deleted successfully.');
+                    navigate('/projects');
+                  } catch (err) {
+                    console.error('Failed to delete project:', err);
+                    addToast('error', 'Failed to delete project.');
+                  }
                 }
               }}
               onClose={() => navigate('/projects')}
@@ -348,7 +375,7 @@ const Projects: React.FC<ProjectsProps> = ({
 };
 
 // Route wrapper to extract slug and find project
-const ProjectDetailRouteWrapper = ({ projects, isLoading, onEdit, onDelete, onClose }: any) => {
+const ProjectDetailRouteWrapper = ({ projects, isLoading, onEdit, onDelete, onClose, currentUser }: any) => {
   const { slug } = useParams<{ slug: string }>();
 
   if (isLoading) return null;
@@ -374,6 +401,7 @@ const ProjectDetailRouteWrapper = ({ projects, isLoading, onEdit, onDelete, onCl
       project={project}
       onEdit={onEdit}
       onDelete={onDelete}
+      currentUser={currentUser}
     />
   );
 };

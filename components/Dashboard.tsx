@@ -109,6 +109,24 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
         }
     };
 
+    const handleDeleteProject = async (p: ProjectData) => {
+        if (!window.confirm('Are you sure you want to delete this project?')) return;
+        try {
+            if (typeof window !== 'undefined') {
+                const localProjectsStr = localStorage.getItem('campusconnect_projects');
+                if (localProjectsStr) {
+                    const currentProjects = JSON.parse(localProjectsStr);
+                    const updatedProjects = currentProjects.filter((proj: ProjectData) => proj.slug !== p.slug && proj.id !== p.id);
+                    localStorage.setItem('campusconnect_projects', JSON.stringify(updatedProjects));
+                    setUserProjects(userProjects.filter((proj) => proj.slug !== p.slug && proj.id !== p.id));
+                }
+            }
+        } catch (err) {
+            console.error('Error deleting project:', err);
+            alert('Failed to delete project');
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             if (!user) {
@@ -117,8 +135,20 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
             }
 
             try {
-                const [allProjects, leaderboard] = await Promise.all([
-                    githubService.getAllProjects(),
+                let allProjects: ProjectData[] = [];
+                if (typeof window !== 'undefined') {
+                    const localProjectsStr = localStorage.getItem('campusconnect_projects');
+                    if (localProjectsStr) {
+                        allProjects = JSON.parse(localProjectsStr);
+                    } else {
+                        allProjects = await githubService.getAllProjects();
+                        localStorage.setItem('campusconnect_projects', JSON.stringify(allProjects));
+                    }
+                } else {
+                    allProjects = await githubService.getAllProjects();
+                }
+
+                const [leaderboard] = await Promise.all([
                     githubService.getLeaderboard(),
                 ]);
 
@@ -386,7 +416,19 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-slate-900 dark:text-white mb-1">{project.title}</h3>
+                                        <h3 className="font-bold text-slate-900 dark:text-white mb-1 flex items-center justify-between">
+                                            <span>{project.title}</span>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteProject(project);
+                                                }}
+                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                                title="Delete Project"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </h3>
                                         <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">{project.description}</p>
                                     </div>
                                 ))}
