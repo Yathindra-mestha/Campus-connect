@@ -7,6 +7,8 @@ import {
     MessageSquare, Trash2, Settings, Loader2
 } from 'lucide-react';
 import { githubService, ProjectData } from '../utils/github';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '../utils/firebase';
 
 const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handleNavigate: (path: string) => void; onProfileUpdate?: () => void }) => {
     const [userProjects, setUserProjects] = useState<ProjectData[]>([]);
@@ -112,17 +114,12 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
     const handleDeleteProject = async (p: ProjectData) => {
         if (!window.confirm('Are you sure you want to delete this project?')) return;
         try {
-            if (typeof window !== 'undefined') {
-                const localProjectsStr = localStorage.getItem('campusconnect_projects');
-                if (localProjectsStr) {
-                    const currentProjects = JSON.parse(localProjectsStr);
-                    const updatedProjects = currentProjects.filter((proj: ProjectData) => proj.slug !== p.slug && proj.id !== p.id);
-                    localStorage.setItem('campusconnect_projects', JSON.stringify(updatedProjects));
-                    setUserProjects(userProjects.filter((proj) => proj.slug !== p.slug && proj.id !== p.id));
-                }
+            if (p.id) {
+                await deleteDoc(doc(db, 'projects', String(p.id)));
+                setUserProjects(userProjects.filter((proj) => proj.id !== p.id && proj.slug !== p.slug));
             }
         } catch (err) {
-            console.error('Error deleting project:', err);
+            console.error('Error deleting project from Firestore:', err);
             alert('Failed to delete project');
         }
     };
@@ -135,25 +132,7 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
             }
 
             try {
-                const staticProjects = await githubService.getAllProjects();
-                let allProjects = staticProjects;
-
-                if (typeof window !== 'undefined') {
-                    const localProjectsStr = localStorage.getItem('campusconnect_projects');
-                    if (localProjectsStr) {
-                        try {
-                            const localProjects = JSON.parse(localProjectsStr);
-                            const userCreatedProjects = localProjects.filter((p: any) => p.id && String(p.id).startsWith('project-'));
-
-                            allProjects = [...userCreatedProjects, ...staticProjects];
-                            localStorage.setItem('campusconnect_projects', JSON.stringify(allProjects));
-                        } catch (e) {
-                            localStorage.setItem('campusconnect_projects', JSON.stringify(staticProjects));
-                        }
-                    } else {
-                        localStorage.setItem('campusconnect_projects', JSON.stringify(staticProjects));
-                    }
-                }
+                const allProjects = await githubService.getAllProjects();
 
                 const [leaderboard] = await Promise.all([
                     githubService.getLeaderboard(),

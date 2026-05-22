@@ -6,6 +6,8 @@ import { Routes, Route, useNavigate, useParams, Link } from 'react-router-dom';
 import ProjectUploadModal from './ProjectUploadModal';
 import ProjectDetailOverlay from './ProjectDetailOverlay';
 import { githubService, ProjectData } from '../utils/github';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '../utils/firebase';
 
 const categories = [
   { id: 'all', label: 'All Domains' },
@@ -39,29 +41,8 @@ const Projects: React.FC<ProjectsProps> = ({
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
-      const staticProjects = await githubService.getAllProjects();
-      let finalProjects = staticProjects;
-
-      if (typeof window !== 'undefined') {
-        const localProjectsStr = localStorage.getItem('campusconnect_projects');
-        if (localProjectsStr) {
-          try {
-            const localProjects = JSON.parse(localProjectsStr) as ProjectData[];
-            // Filter to keep only user-created custom projects (whose IDs start with 'project-')
-            const userCreatedProjects = localProjects.filter(p => p.id && String(p.id).startsWith('project-'));
-
-            // Force-upgrade all static projects to the new premium ones from projects.json
-            finalProjects = [...userCreatedProjects, ...staticProjects];
-            localStorage.setItem('campusconnect_projects', JSON.stringify(finalProjects));
-          } catch (e) {
-            console.error('Error parsing local projects, resetting to static ones:', e);
-            localStorage.setItem('campusconnect_projects', JSON.stringify(staticProjects));
-          }
-        } else {
-          localStorage.setItem('campusconnect_projects', JSON.stringify(staticProjects));
-        }
-      }
-      setProjects(finalProjects);
+      const allProjects = await githubService.getAllProjects();
+      setProjects(allProjects);
     } catch (error) {
       console.error('Failed to fetch projects', error);
       addToast('error', 'Failed to load projects. Please try again later.');
@@ -175,19 +156,14 @@ const Projects: React.FC<ProjectsProps> = ({
               onDelete={async (p: ProjectData) => {
                 if (window.confirm('Are you sure you want to delete this project?')) {
                   try {
-                    if (typeof window !== 'undefined') {
-                      const localProjectsStr = localStorage.getItem('campusconnect_projects');
-                      if (localProjectsStr) {
-                        const currentProjects = JSON.parse(localProjectsStr);
-                        const updatedProjects = currentProjects.filter((proj: ProjectData) => proj.slug !== p.slug && proj.id !== p.id);
-                        localStorage.setItem('campusconnect_projects', JSON.stringify(updatedProjects));
-                        setProjects(updatedProjects);
-                      }
+                    if (p.id) {
+                      await deleteDoc(doc(db, 'projects', String(p.id)));
+                      setProjects(prev => prev.filter(proj => proj.id !== p.id));
                     }
                     addToast('success', 'Project deleted successfully.');
                     navigate('/projects');
                   } catch (err) {
-                    console.error('Failed to delete project:', err);
+                    console.error('Failed to delete project from Firestore:', err);
                     addToast('error', 'Failed to delete project.');
                   }
                 }
@@ -358,18 +334,13 @@ const Projects: React.FC<ProjectsProps> = ({
                                   e.preventDefault();
                                   if (window.confirm('Are you sure you want to delete this project?')) {
                                     try {
-                                      if (typeof window !== 'undefined') {
-                                        const localProjectsStr = localStorage.getItem('campusconnect_projects');
-                                        if (localProjectsStr) {
-                                          const currentProjects = JSON.parse(localProjectsStr);
-                                          const updatedProjects = currentProjects.filter((proj: ProjectData) => proj.slug !== project.slug && proj.id !== project.id);
-                                          localStorage.setItem('campusconnect_projects', JSON.stringify(updatedProjects));
-                                          setProjects(updatedProjects);
-                                        }
+                                      if (project.id) {
+                                        await deleteDoc(doc(db, 'projects', String(project.id)));
+                                        setProjects(prev => prev.filter(proj => proj.id !== project.id));
                                       }
                                       addToast('success', 'Project deleted successfully.');
                                     } catch (err) {
-                                      console.error('Failed to delete project:', err);
+                                      console.error('Failed to delete project from Firestore:', err);
                                       addToast('error', 'Failed to delete project.');
                                     }
                                   }

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Link as LinkIcon, Github, Image as ImageIcon, Loader2, Plus, Info, Tag, Trash2 } from 'lucide-react';
 import { optimizeImage } from '../utils/imageOptimization';
 import { githubService, ProjectData } from '../utils/github';
+import { collection, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { db } from '../utils/firebase';
 
 interface ProjectUploadModalProps {
     isOpen: boolean;
@@ -75,63 +77,45 @@ const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose
 
             const username = activeUser.login || activeUser.email?.split('@')[0] || activeUser.name?.replace(/\s+/g, '').toLowerCase();
             
-            if (typeof window !== 'undefined') {
-                const localProjectsStr = localStorage.getItem('campusconnect_projects');
-                let currentProjects: ProjectData[] = [];
-                if (localProjectsStr) {
-                    try {
-                        currentProjects = JSON.parse(localProjectsStr);
-                    } catch (err) {
-                        console.error(err);
-                    }
-                }
-
-                if (isEditing && project) {
-                    // Update existing project
-                    const updatedProjects = currentProjects.map((p) => {
-                        if (p.slug === project.slug || p.id === project.id) {
-                            return {
-                                ...p,
-                                title: formData.title,
-                                description: formData.description,
-                                tags: formData.tags,
-                                github_url: formData.github_url,
-                                image: formData.image,
-                                branch: formData.branch,
-                                date: new Date().toLocaleDateString()
-                            };
-                        }
-                        return p;
-                    });
-                    localStorage.setItem('campusconnect_projects', JSON.stringify(updatedProjects));
-                    addToast('success', 'Project updated successfully!');
-                } else {
-                    // Create new project
-                    const newProj: ProjectData = {
-                        id: `project-${Date.now()}`,
-                        slug: formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now(),
-                        title: formData.title,
-                        description: formData.description,
-                        tags: formData.tags,
-                        github_url: formData.github_url,
-                        image: formData.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800', // standard high-quality mockup cover
-                        branch: formData.branch,
-                        author: activeUser.name,
-                        author_login: username,
-                        likes: 0,
-                        date: new Date().toLocaleDateString(),
-                        body: `## About ${formData.title}\n\n${formData.description}\n\n## Core Technologies\n\n${formData.tags.map(t => `- ${t}`).join('\n')}\n\n## Getting Started\n\nTo run this project locally, clone the repository and run the setup scripts.\n\n\`\`\`bash\ngit clone ${formData.github_url || 'https://github.com/example/repo'}\ncd project\nnpm install\nnpm run dev\n\`\`\``
-                    };
-                    const updatedProjects = [newProj, ...currentProjects];
-                    localStorage.setItem('campusconnect_projects', JSON.stringify(updatedProjects));
-                    addToast('success', 'Project created successfully!');
-                }
+            if (isEditing && project && project.id) {
+                // Update existing project in Firestore
+                const updatedData = {
+                    title: formData.title,
+                    description: formData.description,
+                    tags: formData.tags,
+                    github_url: formData.github_url,
+                    image: formData.image,
+                    branch: formData.branch,
+                    date: new Date().toLocaleDateString()
+                };
+                await updateDoc(doc(db, 'projects', String(project.id)), updatedData);
+                addToast('success', 'Project updated successfully!');
+            } else {
+                // Create new project in Firestore
+                const projectId = `project-${Date.now()}`;
+                const newProj: ProjectData = {
+                    id: projectId,
+                    slug: formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now(),
+                    title: formData.title,
+                    description: formData.description,
+                    tags: formData.tags,
+                    github_url: formData.github_url,
+                    image: formData.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800', // standard high-quality mockup cover
+                    branch: formData.branch,
+                    author: activeUser.name,
+                    author_login: username,
+                    likes: 0,
+                    date: new Date().toLocaleDateString(),
+                    body: `## About ${formData.title}\n\n${formData.description}\n\n## Core Technologies\n\n${formData.tags.map(t => `- ${t}`).join('\n')}\n\n## Getting Started\n\nTo run this project locally, clone the repository and run the setup scripts.\n\n\`\`\`bash\ngit clone ${formData.github_url || 'https://github.com/example/repo'}\ncd project\nnpm install\nnpm run dev\n\`\`\``
+                };
+                await setDoc(doc(db, 'projects', projectId), newProj);
+                addToast('success', 'Project created successfully!');
             }
 
             onSuccess?.();
             onClose();
         } catch (error: any) {
-            console.error('Failed to save project', error);
+            console.error('Failed to save project to Firestore', error);
             addToast('error', `Error: ${error.message || 'Failed to save project'}`);
         } finally {
             setIsSaving(false);

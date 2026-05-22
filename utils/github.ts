@@ -1,3 +1,6 @@
+import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
+import { db } from './firebase';
+
 export interface ProfileUpdate {
     name?: string;
     bio?: string;
@@ -26,11 +29,39 @@ export interface ProjectData {
 export const githubService = {
     async getAllProjects(): Promise<ProjectData[]> {
         try {
-            const res = await fetch('/data/projects.json');
-            if (!res.ok) throw new Error('Failed to fetch projects data');
-            return await res.json();
+            const querySnapshot = await getDocs(collection(db, 'projects'));
+            let projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProjectData[];
+
+            // Auto-seeding: if cloud database is fresh and completely empty, populate it with premium static showcase projects
+            if (projects.length === 0) {
+                try {
+                    const res = await fetch('/data/projects.json');
+                    if (res.ok) {
+                        const staticProjects = await res.json() as ProjectData[];
+                        for (const p of staticProjects) {
+                            const projectId = p.id ? String(p.id) : `static-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+                            await setDoc(doc(db, 'projects', projectId), {
+                                ...p,
+                                id: projectId
+                            });
+                        }
+                        // Re-fetch now that Firestore has been seeded
+                        const reSnapshot = await getDocs(collection(db, 'projects'));
+                        projects = reSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProjectData[];
+                    }
+                } catch (seedingErr) {
+                    console.error('Failed to seed default database:', seedingErr);
+                }
+            }
+
+            // Sort projects so user custom-made ones or newer ones appear first (date descending)
+            return projects.sort((a, b) => {
+                const dateA = a.date ? new Date(a.date).getTime() : 0;
+                const dateB = b.date ? new Date(b.date).getTime() : 0;
+                return dateB - dateA;
+            });
         } catch (error) {
-            console.error('Error fetching all projects:', error);
+            console.error('Error fetching all projects from Firestore:', error);
             return [];
         }
     },
