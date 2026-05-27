@@ -108,9 +108,12 @@ const PublicProfile = () => {
                     <div className="relative -mt-20 mb-8">
                         <div className="w-40 h-40 rounded-3xl overflow-hidden border-8 border-white dark:border-[#1e1e1e] shadow-2xl bg-white dark:bg-[#1c1c1e]">
                             <img
-                                src={profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.name}`}
+                                src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=6366f1&color=fff&bold=true`}
                                 alt={profile.name}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=6366f1&color=fff&bold=true`;
+                                }}
                             />
                         </div>
                     </div>

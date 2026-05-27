@@ -263,9 +263,12 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                     >
                         <div className="w-full h-full rounded-full overflow-hidden border-4 border-white dark:border-zinc-900 shadow-inner relative">
                             <img
-                                src={optimizeImage(displayUser.avatar_url, { width: 160 })}
+                                src={optimizeImage(displayUser.avatar_url, { width: 160 }) || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.name || displayUser.name || displayUser.login || 'User')}&background=6366f1&color=fff&bold=true&size=160`}
                                 alt="Profile"
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover/avatar:scale-105"
+                                onError={(e) => {
+                                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.name || displayUser.name || displayUser.login || 'User')}&background=6366f1&color=fff&bold=true&size=160`;
+                                }}
                                 loading="lazy"
                                 decoding="async"
                             />

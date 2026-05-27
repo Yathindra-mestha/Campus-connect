@@ -117,9 +117,12 @@ const MembersList = () => {
                                     <div className="flex items-center gap-6 mb-6">
                                         <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-indigo-500/20 group-hover:border-indigo-500 transition-colors">
                                             <img
-                                                src={member.avatar_url || `https://ui-avatars.com/api/?name=${member.name}`}
+                                                src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'User')}&background=6366f1&color=fff&bold=true`}
                                                 alt={member.name}
                                                 className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'User')}&background=6366f1&color=fff&bold=true`;
+                                                }}
                                             />
                                         </div>
                                         <div className="flex-1 overflow-hidden">
