@@ -83,51 +83,51 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
             <div className="absolute bottom-20 right-1/4 w-[400px] h-[400px] bg-purple-500/5 dark:bg-purple-600/5 blur-[150px] rounded-full pointer-events-none z-0" />
 
             {/* Top Navigation Bar - Premium Style */}
-            <header className="flex items-center justify-between px-4 sm:px-6 h-16 border-b border-slate-100 dark:border-white/5 bg-white/70 dark:bg-[#070709]/70 backdrop-blur-2xl z-50 sticky top-0">
-                <div className="flex items-center gap-6">
+            <header className="flex items-center justify-between px-4 sm:px-6 h-16 border-b border-slate-100 dark:border-white/5 bg-white/70 dark:bg-[#070709]/70 backdrop-blur-2xl z-50 sticky top-0 shrink-0">
+                <div className="flex items-center gap-6 shrink-0">
                     <button
                         onClick={onClose}
-                        className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all font-semibold text-sm group"
+                        className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all font-semibold text-sm group whitespace-nowrap shrink-0 cursor-pointer"
                     >
-                        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform shrink-0" />
                         Back to Projects
                     </button>
-                    <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 hidden md:block" />
-                    <nav className="hidden md:flex items-center gap-2 text-sm">
+                    <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 hidden md:block shrink-0" />
+                    <nav className="hidden md:flex items-center gap-2 text-sm shrink-0">
                         <span className="text-slate-400">Projects</span>
-                        <ChevronLeft className="w-3.5 h-3.5 rotate-180 text-slate-300" />
+                        <ChevronLeft className="w-3.5 h-3.5 rotate-180 text-slate-300 shrink-0" />
                         <span className="text-indigo-600 dark:text-indigo-400 font-bold truncate max-w-[200px]">
                             {project.title}
                         </span>
                     </nav>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 shrink-0">
                     {isOwner && (
                         <>
                             <button
                                 onClick={() => onEdit?.(project)}
-                                className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all text-sm cursor-pointer"
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all text-sm cursor-pointer whitespace-nowrap shrink-0"
                                 title="Edit Project"
                             >
-                                <Pencil className="w-4 h-4" />
+                                <Pencil className="w-4 h-4 shrink-0" />
                                 <span className="hidden sm:inline">Edit</span>
                             </button>
                             <button
                                 onClick={() => onDelete?.(project)}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-400 rounded-xl font-bold hover:bg-red-100 dark:hover:bg-red-500/20 transition-all text-sm cursor-pointer"
+                                className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-400 rounded-xl font-bold hover:bg-red-100 dark:hover:bg-red-500/20 transition-all text-sm cursor-pointer whitespace-nowrap shrink-0"
                                 title="Delete Project"
                             >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4 shrink-0" />
                                 <span className="hidden sm:inline">Delete</span>
                             </button>
                         </>
                     )}
                     <button
                         onClick={onClose}
-                        className="p-2.5 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all cursor-pointer"
+                        className="p-2.5 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all cursor-pointer shrink-0"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-5 h-5 shrink-0" />
                     </button>
                 </div>
             </header>
