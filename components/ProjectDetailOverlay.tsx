@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
-import { X, Github, ExternalLink, Calendar, User, BookOpen, Tag, Pencil, Trash2, FileText, ChevronLeft, ArrowUp, Layout } from 'lucide-react';
+import { X, Github, ExternalLink, Calendar, User, BookOpen, Tag, Pencil, Trash2, FileText, ChevronLeft, ArrowUp, Layout, Settings } from 'lucide-react';
 import { ProjectData } from '../utils/github';
 
 interface ProjectDetailOverlayProps {
@@ -103,26 +103,6 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                    {isOwner && (
-                        <>
-                            <button
-                                onClick={() => onEdit?.(project)}
-                                className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all text-sm cursor-pointer whitespace-nowrap shrink-0"
-                                title="Edit Project"
-                            >
-                                <Pencil className="w-4 h-4 shrink-0" />
-                                <span className="hidden sm:inline">Edit</span>
-                            </button>
-                            <button
-                                onClick={() => onDelete?.(project)}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-400 rounded-xl font-bold hover:bg-red-100 dark:hover:bg-red-500/20 transition-all text-sm cursor-pointer whitespace-nowrap shrink-0"
-                                title="Delete Project"
-                            >
-                                <Trash2 className="w-4 h-4 shrink-0" />
-                                <span className="hidden sm:inline">Delete</span>
-                            </button>
-                        </>
-                    )}
                     <button
                         onClick={onClose}
                         className="p-2.5 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all cursor-pointer shrink-0"
@@ -319,6 +299,33 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
                         {/* Right Column: Meta Information & Stats */}
                         <aside className="w-full xl:w-80 flex-shrink-0 z-10">
                             <div className="sticky top-12 space-y-10">
+                                {/* Author Controls Panel */}
+                                {isOwner && (
+                                    <div className="p-8 rounded-[2rem] bg-indigo-50/30 dark:bg-indigo-500/5 border border-indigo-100/50 dark:border-indigo-500/10 shadow-lg relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                                        <h4 className="flex items-center gap-2 text-[11px] font-black text-indigo-650 dark:text-indigo-400 mb-6 uppercase tracking-[0.2em] relative z-10">
+                                            <Settings className="w-4 h-4 animate-spin-slow" />
+                                            Developer Panel
+                                        </h4>
+                                        <div className="space-y-3 relative z-10">
+                                            <button
+                                                onClick={() => onEdit?.(project)}
+                                                className="flex items-center justify-center gap-2.5 w-full h-12 bg-white dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl font-bold hover:scale-[1.02] active:scale-95 transition-all text-sm cursor-pointer shadow-sm"
+                                            >
+                                                <Pencil className="w-4 h-4 shrink-0" />
+                                                Edit Project
+                                            </button>
+                                            <button
+                                                onClick={() => onDelete?.(project)}
+                                                className="flex items-center justify-center gap-2.5 w-full h-12 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-400 rounded-2xl font-bold hover:scale-[1.02] active:scale-95 transition-all text-sm cursor-pointer shadow-sm"
+                                            >
+                                                <Trash2 className="w-4 h-4 shrink-0" />
+                                                Delete Project
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Action Card */}
                                 <div className="p-8 rounded-[2rem] bg-white dark:bg-[#0a0a0d] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none">
                                     <h4 className="flex items-center gap-2 text-[11px] font-black text-slate-400 dark:text-slate-500 mb-6 uppercase tracking-[0.2em]">

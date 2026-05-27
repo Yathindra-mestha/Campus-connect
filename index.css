@@ -17,6 +17,8 @@
   --color-brand-700: #03579e;
   --color-brand-800: #074a81;
   --color-brand-900: #0c3f6c;
+
+  --animate-spin-slow: spin 10s linear infinite;
 }
 
 @layer utilities {
