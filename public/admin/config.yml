@@ -11,7 +11,7 @@ public_folder: "/images/projects"
 collections:
   - name: "projects"
     label: "Projects"
-    folder: "src/content/students/Vinayakahr10/projects" # Initially scoped to one student for structure mapping
+    folder: "src/content/students/Yathindra-mestha/projects" # Scope to the active user's projects
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     fields:
