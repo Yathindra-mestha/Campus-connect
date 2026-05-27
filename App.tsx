@@ -207,7 +207,7 @@ const App = () => {
           githubService.getLeaderboard()
         ]);
         setStats(liveStats);
-        setFeaturedProjects(allProjects.slice(0, 4));
+        setFeaturedProjects(allProjects.slice(0, 3));
         setLeaderboard(rankings);
       } catch (error) {
         console.error('Failed to fetch stats/projects/rankings', error);

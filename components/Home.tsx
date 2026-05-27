@@ -102,6 +102,7 @@ const Home = ({ setActiveSection, stats, featuredProjects, topContributors, onEx
                                             tags={project.tags || []}
                                             likes={project.likes || 0}
                                             image={project.image || ''}
+                                            isFeatured={idx === 0}
                                         />
                                     ))
                                 ) : (

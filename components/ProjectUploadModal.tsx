@@ -86,7 +86,7 @@ const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose
                     github_url: formData.github_url,
                     image: formData.image,
                     branch: formData.branch,
-                    date: new Date().toLocaleDateString()
+                    date: new Date().toISOString()
                 };
                 await updateDoc(doc(db, 'projects', String(project.id)), updatedData);
                 addToast('success', 'Project updated successfully!');
@@ -105,7 +105,7 @@ const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose
                     author: activeUser.name,
                     author_login: username,
                     likes: 0,
-                    date: new Date().toLocaleDateString(),
+                    date: new Date().toISOString(),
                     body: `## About ${formData.title}\n\n${formData.description}\n\n## Core Technologies\n\n${formData.tags.map(t => `- ${t}`).join('\n')}\n\n## Getting Started\n\nTo run this project locally, clone the repository and run the setup scripts.\n\n\`\`\`bash\ngit clone ${formData.github_url || 'https://github.com/example/repo'}\ncd project\nnpm install\nnpm run dev\n\`\`\``
                 };
                 await setDoc(doc(db, 'projects', projectId), newProj);
