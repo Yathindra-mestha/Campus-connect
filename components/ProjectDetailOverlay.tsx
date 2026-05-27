@@ -215,31 +215,73 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
                             </div>
 
                             {/* Markdown Rendering with Custom Refined Blocks */}
-                            <div className="prose prose-slate dark:prose-invert max-w-none 
-                                prose-headings:text-slate-900 dark:prose-headings:text-white prose-headings:font-black prose-headings:tracking-tight
-                                prose-h2:flex prose-h2:items-center prose-h2:gap-5 prose-h2:text-3xl prose-h2:mt-20 prose-h2:mb-8 prose-h2:pb-4 prose-h2:border-b prose-h2:border-slate-100 dark:prose-h2:border-white/5
-                                prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-p:text-[17px] prose-p:leading-[1.8]
-                                prose-li:text-slate-600 dark:prose-li:text-slate-400 prose-li:text-[17px] prose-li:my-2
-                                prose-strong:text-slate-950 dark:prose-strong:text-white prose-strong:font-bold
-                                prose-code:text-indigo-600 dark:prose-code:text-indigo-450 prose-code:bg-indigo-50 dark:prose-code:bg-indigo-500/10 prose-code:px-2.5 prose-code:py-1 prose-code:rounded-xl prose-code:font-bold prose-code:before:content-none prose-code:after:content-none
-                                prose-pre:bg-slate-900 dark:prose-pre:bg-black prose-pre:border prose-pre:border-white/10 prose-pre:rounded-[2rem] prose-pre:p-8 prose-pre:shadow-2xl prose-pre:my-10
-                                prose-blockquote:border-l-4 prose-blockquote:border-indigo-500 prose-blockquote:bg-indigo-50/50 dark:prose-blockquote:bg-indigo-500/5 prose-blockquote:p-8 prose-blockquote:rounded-3xl prose-blockquote:text-xl prose-blockquote:italic prose-blockquote:font-medium
-                            "
-                            >
+                            <div className="max-w-none">
                                 <ReactMarkdown
                                     components={{
                                         h2: ({ node, ...props }) => {
                                             const id = props.children?.toString().toLowerCase().replace(/[^a-z0-9]+/g, '-');
                                             const index = sections.findIndex(s => s.id === id);
                                             return (
-                                                <h2 id={id} className="group relative scroll-mt-24">
-                                                    <span className="text-indigo-500/20 dark:text-white/5 font-black text-4xl tabular-nums">
-                                                        {String(index + 1).padStart(2, '0')}
+                                                <h2 id={id} className="group relative scroll-mt-24 flex items-center gap-4 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-16 mb-6 pb-3 border-b border-slate-100 dark:border-white/5">
+                                                    <span className="text-indigo-500/30 dark:text-indigo-400/25 font-black text-3xl sm:text-4xl tabular-nums">
+                                                        {String(index >= 0 ? index : 0).padStart(2, '0')}
                                                     </span>
                                                     <span>{props.children}</span>
                                                 </h2>
-                                            )
-                                        }
+                                            );
+                                        },
+                                        h3: ({ node, ...props }) => (
+                                            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-10 mb-4">
+                                                {props.children}
+                                            </h3>
+                                        ),
+                                        p: ({ node, ...props }) => (
+                                            <p className="text-slate-600 dark:text-slate-400 text-[17px] leading-relaxed mb-6 font-medium">
+                                                {props.children}
+                                            </p>
+                                        ),
+                                        ul: ({ node, ...props }) => (
+                                            <ul className="list-disc pl-6 space-y-2 mb-6 text-slate-600 dark:text-slate-400 text-[17px] font-medium">
+                                                {props.children}
+                                            </ul>
+                                        ),
+                                        ol: ({ node, ...props }) => (
+                                            <ol className="list-decimal pl-6 space-y-2 mb-6 text-slate-600 dark:text-slate-400 text-[17px] font-medium">
+                                                {props.children}
+                                            </ol>
+                                        ),
+                                        li: ({ node, ...props }) => (
+                                            <li className="pl-1 text-slate-600 dark:text-slate-400">
+                                                {props.children}
+                                            </li>
+                                        ),
+                                        blockquote: ({ node, ...props }) => (
+                                            <blockquote className="border-l-4 border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/5 p-6 rounded-3xl text-xl italic font-medium my-8 text-slate-700 dark:text-slate-350">
+                                                {props.children}
+                                            </blockquote>
+                                        ),
+                                        pre: ({ node, ...props }) => (
+                                            <pre className="bg-slate-900 dark:bg-[#0c0c0e] border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-xl my-8 overflow-x-auto custom-scrollbar">
+                                                {props.children}
+                                            </pre>
+                                        ),
+                                        code: ({ node, className, children, ...props }) => {
+                                            const isInline = !className;
+                                            return isInline ? (
+                                                <code className="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-lg font-bold text-sm">
+                                                    {children}
+                                                </code>
+                                            ) : (
+                                                <code className="text-slate-100 dark:text-slate-200 font-mono text-sm leading-relaxed block whitespace-pre">
+                                                    {children}
+                                                </code>
+                                            );
+                                        },
+                                        strong: ({ node, ...props }) => (
+                                            <strong className="text-slate-950 dark:text-white font-bold">
+                                                {props.children}
+                                            </strong>
+                                        )
                                     }}
                                 >
                                     {project.body || ''}
