@@ -1,4 +1,4 @@
-import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, setDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 export interface ProfileUpdate {
@@ -32,27 +32,25 @@ export const githubService = {
             const querySnapshot = await getDocs(collection(db, 'projects'));
             let projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProjectData[];
 
-            // Auto-seeding: if cloud database is fresh and completely empty, populate it with premium static showcase projects
-            if (projects.length === 0) {
-                try {
-                    const res = await fetch('/data/projects.json');
-                    if (res.ok) {
-                        const staticProjects = await res.json() as ProjectData[];
-                        for (const p of staticProjects) {
-                            const projectId = p.id ? String(p.id) : `static-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-                            await setDoc(doc(db, 'projects', projectId), {
-                                ...p,
-                                id: projectId
-                            });
-                        }
-                        // Re-fetch now that Firestore has been seeded
-                        const reSnapshot = await getDocs(collection(db, 'projects'));
-                        projects = reSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProjectData[];
+            // Clean up stock projects from Firestore if any exist
+            const stockIds = [
+                'Yathindra-mestha-aerospace.md',
+                'Yathindra-mestha-codecraft.md',
+                'Yathindra-mestha-ecotrack.md',
+                'Yathindra-mestha-nexus-ai.md'
+            ];
+            for (const docId of stockIds) {
+                if (projects.some(p => p.id === docId)) {
+                    try {
+                        await deleteDoc(doc(db, 'projects', docId));
+                    } catch (e) {
+                        console.error('Failed to clean up stock project:', docId, e);
                     }
-                } catch (seedingErr) {
-                    console.error('Failed to seed default database:', seedingErr);
                 }
             }
+
+            // Filter out stock projects from the returned list
+            projects = projects.filter(p => p.id && !stockIds.includes(String(p.id)));
 
             // Sort projects so user custom-made ones or newer ones appear first (date descending)
             return projects.sort((a, b) => {
