@@ -279,6 +279,11 @@ const App = () => {
         <Route path="/leaderboard" element={<Leaderboard
           setActiveSection={(section) => { if (section !== 'profile') handleNavigate(section) }}
           setSelectedUserForProfile={(u) => { if (u) handleNavigate('profile', u.login) }}
+          currentUser={user}
+          onLoginSuccess={(userData) => {
+            setUser(userData);
+            addToast('success', `Welcome back, ${userData.name}!`);
+          }}
         />} />
         <Route path="/about" element={<About />} />
         <Route path="/profile" element={

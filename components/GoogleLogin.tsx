@@ -1,6 +1,8 @@
 import React, { useEffect, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ENV_CONFIG } from '../src/constants/config';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { db } from '../utils/firebase';
 
 // Declaration for google accounts id
 declare global {
@@ -42,7 +44,7 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
         if (userData) {
             // No Supabase token exchange needed! Decode and set local session
             const username = userData.email.split('@')[0] || userData.name.toLowerCase().replace(/\s+/g, '');
-            const userInfo = {
+            const userInfo: any = {
                 id: userData.sub || userData.email,
                 name: userData.name,
                 email: userData.email,
@@ -53,6 +55,38 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
                 linkedin_url: '',
                 github_url: `https://github.com/${username}`
             };
+
+            // Sync user details to Firebase Firestore 'users' collection
+            try {
+                const userDocRef = doc(db, 'users', username.toLowerCase());
+                const userDocSnap = await getDoc(userDocRef);
+                
+                if (userDocSnap.exists()) {
+                    // Merge existing Firestore profile data into localStorage and our session!
+                    const existingData = userDocSnap.data();
+                    if (existingData.name) userInfo.name = existingData.name;
+                    if (existingData.branch) userInfo.branch = existingData.branch;
+                    if (existingData.bio) userInfo.bio = existingData.bio;
+                    if (existingData.location) userInfo.location = existingData.location;
+                    if (existingData.avatar_url) userInfo.avatar_url = existingData.avatar_url;
+                } else {
+                    // Create new user profile document in Firestore
+                    await setDoc(userDocRef, {
+                        id: userInfo.id,
+                        login: username.toLowerCase(),
+                        name: userInfo.name,
+                        email: userInfo.email,
+                        avatar_url: userInfo.avatar_url,
+                        branch: userInfo.branch,
+                        bio: '',
+                        location: '',
+                        created_at: new Date().toISOString(),
+                        last_active_at: new Date().toISOString()
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to sync user to Firestore:', e);
+            }
 
             localStorage.setItem('googleUser', JSON.stringify(userInfo));
 

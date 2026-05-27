@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { githubService } from '../utils/github';
 import { optimizeImage } from '../utils/imageOptimization';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { db } from '../utils/firebase';
 
 interface ProfileProps {
     currentUser: {
@@ -82,41 +84,61 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
             };
 
             try {
-                const token = localStorage.getItem('github_token');
-                const path = `src/content/students/${displayUser.login}/index.md`;
-                const res = await fetch(`https://api.github.com/repos/Yathindra-mestha/Campus_connect/contents/${path}?t=${Date.now()}`, {
-                    headers: token ? {
-                        Authorization: `token ${token}`,
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    } : {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    },
-                    cache: 'no-store'
-                });
+                // Prioritize checking Firestore 'users' collection
+                const userDocRef = doc(db, 'users', displayUser.login.toLowerCase());
+                const userDocSnap = await getDoc(userDocRef);
 
-                if (res.ok) {
-                    const json = await res.json();
-                    const content = decodeURIComponent(escape(atob(json.content)));
-                    const nMatch = content.match(/name:\s*"(.*)"/);
-                    const bMatch = content.match(/branch:\s*"(.*)"/);
-                    const bioMatch = content.match(/bio:\s*"(.*)"/);
-                    const locMatch = content.match(/location:\s*"(.*)"/);
-                    const coverMatch = content.match(/cover_url:\s*"(.*)"/);
+                let name = defaultData.name;
+                let branch = defaultData.branch;
+                let bio = defaultData.bio;
+                let location = defaultData.location;
+                let cover_url = '';
 
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    if (userData.name) name = userData.name;
+                    if (userData.branch) branch = userData.branch;
+                    if (userData.bio) bio = userData.bio;
+                    if (userData.location) location = userData.location;
+                    if (userData.cover_url) cover_url = userData.cover_url;
+                } else {
+                    // Check if static student metadata index.md exists (e.g. Yathindra-mestha fallback)
+                    try {
+                        const token = localStorage.getItem('github_token');
+                        const path = `src/content/students/${displayUser.login}/index.md`;
+                        const res = await fetch(`https://api.github.com/repos/Yathindra-mestha/Campus_connect/contents/${path}?t=${Date.now()}`, {
+                            headers: token ? {
+                                Authorization: `token ${token}`,
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache'
+                            } : {
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache'
+                            },
+                            cache: 'no-store'
+                        });
+
+                        if (res.ok) {
+                            const json = await res.json();
+                            const content = decodeURIComponent(escape(atob(json.content)));
+                            const nMatch = content.match(/name:\s*"(.*)"/);
+                            const bMatch = content.match(/branch:\s*"(.*)"/);
+                            const bioMatch = content.match(/bio:\s*"(.*)"/);
+                            const locMatch = content.match(/location:\s*"(.*)"/);
+                            const coverMatch = content.match(/cover_url:\s*"(.*)"/);
+
+                            if (nMatch) name = nMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+                            if (bMatch) branch = bMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+                            if (bioMatch) bio = bioMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+                            if (locMatch) location = locMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+                            if (coverMatch) cover_url = coverMatch[1];
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse index.md fallback', e);
+                    }
+
+                    // Also check local overrides
                     const localDataStr = localStorage.getItem(`profileDetails_${displayUser.login}`);
-                    let name = defaultData.name;
-                    let branch = defaultData.branch;
-                    let bio = defaultData.bio;
-                    let location = defaultData.location;
-
-                    if (nMatch) name = nMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
-                    if (bMatch) branch = bMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
-                    if (bioMatch) bio = bioMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
-                    if (locMatch) location = locMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
-
-                    // Allow local overrides
                     if (localDataStr) {
                         try {
                             const localData = JSON.parse(localDataStr);
@@ -124,41 +146,29 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                             if (localData.branch) branch = localData.branch;
                             if (localData.bio) bio = localData.bio;
                             if (localData.location) location = localData.location;
-                        } catch (e) {
-                            // parsing error, ignore
-                        }
-                    }
-
-                    setProfileData({
-                        name,
-                        branch,
-                        bio,
-                        location,
-                        cover_url: coverMatch ? coverMatch[1] : (displayUser as any).cover_url || ''
-                    });
-                } else {
-                    const localDataStr = localStorage.getItem(`profileDetails_${displayUser.login}`);
-                    if (localDataStr) {
-                        try {
-                            const localData = JSON.parse(localDataStr);
-                            setProfileData({
-                                name: localData.name || defaultData.name,
-                                branch: localData.branch || defaultData.branch,
-                                bio: localData.bio || defaultData.bio,
-                                location: localData.location || defaultData.location,
-                                cover_url: ''
-                            })
-                        } catch (e) { setProfileData(defaultData); }
-                    } else {
-                        setProfileData(defaultData);
+                        } catch (e) {}
                     }
                 }
 
-                // Fetch rankings
+                setProfileData({
+                    name,
+                    branch,
+                    bio,
+                    location,
+                    cover_url
+                });
+
+                // Fetch rankings dynamically
                 const leaderboard = await githubService.getLeaderboard();
-                const userEntry = leaderboard.find(u => u.login === displayUser.login);
+                const userEntry = leaderboard.find(u => u.login.toLowerCase() === displayUser.login.toLowerCase());
                 if (userEntry) {
                     setRealStats(userEntry);
+                } else {
+                    setRealStats({
+                        projects: '0',
+                        points: 1000,
+                        rank: '?'
+                    });
                 }
             } catch (e) {
                 console.error('Failed to fetch profile/rankings', e);
@@ -210,11 +220,45 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
 
     if (!displayUser) return null;
 
-    const handleSaveProfile = () => {
+    const handleSaveProfile = async () => {
         setIsEditing(false);
         if (currentUser) {
-            localStorage.setItem(`profileDetails_${currentUser.login}`, JSON.stringify(profileData));
-            addToast('success', 'Profile updated successfully!');
+            try {
+                // Save to Firestore
+                const userDocRef = doc(db, 'users', currentUser.login.toLowerCase());
+                await setDoc(userDocRef, {
+                    name: profileData.name,
+                    branch: profileData.branch,
+                    bio: profileData.bio,
+                    location: profileData.location,
+                    cover_url: profileData.cover_url || '',
+                    avatar_url: currentUser.avatar_url,
+                    login: currentUser.login.toLowerCase(),
+                    email: currentUser.email || '',
+                    last_active_at: new Date().toISOString()
+                }, { merge: true });
+
+                // Update local storage too so the frontend stays snappy
+                localStorage.setItem(`profileDetails_${currentUser.login}`, JSON.stringify(profileData));
+
+                // Update local googleUser storage if they changed their name or branch
+                const googleUserStr = localStorage.getItem('googleUser');
+                if (googleUserStr) {
+                    const googleUser = JSON.parse(googleUserStr);
+                    googleUser.name = profileData.name;
+                    googleUser.branch = profileData.branch;
+                    localStorage.setItem('googleUser', JSON.stringify(googleUser));
+                    
+                    if (onLoginSuccess) {
+                        onLoginSuccess(googleUser);
+                    }
+                }
+
+                addToast('success', 'Profile saved to cloud database!');
+            } catch (e: any) {
+                console.error('Failed to save profile to Firestore:', e);
+                addToast('error', `Failed to save profile: ${e.message}`);
+            }
         }
     };
 

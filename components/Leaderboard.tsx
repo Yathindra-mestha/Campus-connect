@@ -3,13 +3,16 @@ import { githubService } from '../utils/github';
 import { Trophy, Medal, Star, Search, Filter, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { optimizeImage } from '../utils/imageOptimization';
+import GoogleLogin from './GoogleLogin';
 
 interface LeaderboardProps {
   setActiveSection: (section: string) => void;
   setSelectedUserForProfile: (user: any) => void;
+  currentUser?: any;
+  onLoginSuccess?: (userData: any) => void;
 }
 
-const Leaderboard: React.FC<LeaderboardProps> = ({ setActiveSection, setSelectedUserForProfile }) => {
+const Leaderboard: React.FC<LeaderboardProps> = ({ setActiveSection, setSelectedUserForProfile, currentUser, onLoginSuccess }) => {
   const [timeframe, setTimeframe] = useState('all-time');
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +60,39 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setActiveSection, setSelected
       return matchesSearch && matchesBranch;
     });
   }, [users, searchQuery, branchFilter]);
+
+  if (!currentUser) {
+    return (
+      <div className="max-w-md mx-auto my-20 px-4 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative rounded-[2.5rem] p-8 md:p-12 text-center overflow-hidden border border-slate-200 dark:border-white/5 bg-gradient-to-br from-indigo-50/50 via-white to-violet-50/50 dark:from-[#121215] dark:via-[#0a0a0c] dark:to-[#16121a] shadow-xl"
+        >
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f46e505_1px,transparent_1px),linear-gradient(to_bottom,#4f46e505_1px,transparent_1px)] bg-[size:20px_20px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
+          
+          <div className="relative z-10 space-y-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mb-2">
+              <Trophy className="w-10 h-10" />
+            </div>
+            <h2 className="text-3xl font-display font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+              Leaderboard Locked
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 text-base font-medium leading-relaxed">
+              Sign in with Google to view live student rankings, points, and project contributions!
+            </p>
+            <div className="flex justify-center pt-2">
+              <GoogleLogin
+                clientId="779781376861-biqrgahce5qi427un2o1go6m65l411h6.apps.googleusercontent.com"
+                onLoginSuccess={onLoginSuccess || (() => {})}
+              />
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
