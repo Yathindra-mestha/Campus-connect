@@ -78,6 +78,23 @@ const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose
             const username = activeUser.login || activeUser.email?.split('@')[0] || activeUser.name?.replace(/\s+/g, '').toLowerCase();
             
             if (isEditing && project && project.id) {
+                // Verify ownership or admin access before updating
+                const isAdmin = activeUser && (
+                    (activeUser.email && activeUser.email.trim().toLowerCase() === 'mesthayathi04@gmail.com') ||
+                    (activeUser.login && activeUser.login.trim().toLowerCase() === 'mesthayathi04')
+                );
+                const isOwner = activeUser && (
+                    isAdmin ||
+                    (project.author_login && activeUser.login && project.author_login.toLowerCase() === activeUser.login.toLowerCase()) ||
+                    (project.author && activeUser.name && project.author.toLowerCase() === activeUser.name.toLowerCase()) ||
+                    (project.author_login && activeUser.email && project.author_login.toLowerCase() === activeUser.email.split('@')[0].toLowerCase())
+                );
+                if (!isOwner) {
+                    addToast('error', 'You do not have permission to edit this project.');
+                    setIsSaving(false);
+                    return;
+                }
+
                 // Update existing project in Firestore
                 const updatedData = {
                     title: formData.title,
@@ -142,7 +159,7 @@ const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({ isOpen, onClose
                     className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10"
                 >
                     <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Upload New Project</h2>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">{isEditing ? 'Edit Project' : 'Upload New Project'}</h2>
                         <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors">
                             <X className="w-5 h-5 text-slate-500" />
                         </button>

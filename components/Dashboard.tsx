@@ -10,7 +10,7 @@ import { githubService, ProjectData } from '../utils/github';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../utils/firebase';
 
-const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handleNavigate: (path: string) => void; onProfileUpdate?: () => void }) => {
+const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handleNavigate: (path: string, slugOrLogin?: string | null) => void; onProfileUpdate?: () => void }) => {
     const getActiveUser = (u: any) => {
         if (u && u.email) return u;
         if (typeof window !== 'undefined') {
@@ -432,7 +432,11 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                         {userProjects.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {userProjects.slice(0, 4).map((project, idx) => (
-                                    <div key={idx} className="group relative bg-slate-50 dark:bg-white/5 rounded-2xl p-4 hover:ring-2 hover:ring-indigo-500 transition-all cursor-pointer">
+                                    <div
+                                        key={idx}
+                                        onClick={() => handleNavigate('projects', project.slug)}
+                                        className="group relative bg-slate-50 dark:bg-white/5 rounded-2xl p-4 hover:ring-2 hover:ring-indigo-500 transition-all cursor-pointer"
+                                    >
                                         <div className="aspect-video rounded-xl overflow-hidden mb-4 bg-slate-200 dark:bg-white/10">
                                             {project.image ? (
                                                 <img src={project.image} alt={project.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
