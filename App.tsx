@@ -76,7 +76,7 @@ const App = () => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollYRef = useRef(0);
   const [profileBackground, setProfileBackground] = useState<'default' | 'landscape'>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('profileBackground') as 'default' | 'landscape') || 'default';
@@ -98,6 +98,8 @@ const App = () => {
           return;
         }
 
+        const lastScrollY = lastScrollYRef.current;
+
         if (currentScrollY > lastScrollY && currentScrollY > 80) {
           // Scrolling down
           setIsVisible(false);
@@ -106,7 +108,7 @@ const App = () => {
           setIsVisible(true);
         }
 
-        setLastScrollY(currentScrollY);
+        lastScrollYRef.current = currentScrollY;
       }
     };
 
@@ -114,7 +116,7 @@ const App = () => {
     return () => {
       window.removeEventListener('scroll', controlNavbar);
     };
-  }, [lastScrollY, isMenuOpen]);
+  }, [isMenuOpen]);
 
 
 
@@ -157,10 +159,14 @@ const App = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
-  // Persist scroll position
+  // Persist scroll position with debounce to eliminate synchronous localstorage blockages during active scrolls
   React.useEffect(() => {
+    let timeoutId: any;
     const handleScroll = () => {
-      localStorage.setItem('scrollPosition', window.scrollY.toString());
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        localStorage.setItem('scrollPosition', window.scrollY.toString());
+      }, 250);
     };
 
     // Restore scroll position on mount
@@ -172,7 +178,10 @@ const App = () => {
     }
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   React.useEffect(() => {
