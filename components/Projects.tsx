@@ -17,12 +17,19 @@ const categories = [
   { id: 'civil', label: 'Civil' }
 ];
 
-interface ProjectsProps {
-  autoOpenUploadProject?: boolean;
-  onUploadProjectHandled?: () => void;
-  addToast: (type: 'success' | 'error' | 'info', message: string) => void;
-  currentUser?: any;
-}
+const getActiveUser = (currentUser: any) => {
+  if (currentUser && currentUser.email) return currentUser;
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('googleUser');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.email) return parsed;
+      } catch (e) {}
+    }
+  }
+  return currentUser || { name: 'Guest Developer', login: 'guest', email: 'guest@campusconnect.edu' };
+};
 
 const Projects: React.FC<ProjectsProps> = ({
   autoOpenUploadProject,
@@ -154,6 +161,21 @@ const Projects: React.FC<ProjectsProps> = ({
                 setIsUploadModalOpen(true);
               }}
               onDelete={async (p: ProjectData) => {
+                const activeUser = getActiveUser(currentUser);
+                const isAdmin = activeUser && (
+                  (activeUser.email && activeUser.email.trim().toLowerCase() === 'mesthayathi04@gmail.com') ||
+                  (activeUser.login && activeUser.login.trim().toLowerCase() === 'mesthayathi04')
+                );
+                const isOwner = activeUser && (
+                  isAdmin ||
+                  (p.author_login && activeUser.login && p.author_login.toLowerCase() === activeUser.login.toLowerCase()) ||
+                  (p.author && activeUser.name && p.author.toLowerCase() === activeUser.name.toLowerCase()) ||
+                  (p.author_login && activeUser.email && p.author_login.toLowerCase() === activeUser.email.split('@')[0].toLowerCase())
+                );
+                if (!isOwner) {
+                  addToast('error', 'You do not have permission to delete this project.');
+                  return;
+                }
                 if (window.confirm('Are you sure you want to delete this project?')) {
                   try {
                     if (p.id) {
@@ -227,8 +249,13 @@ const Projects: React.FC<ProjectsProps> = ({
         ) : filteredProjects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
             {filteredProjects.map((project, idx) => {
-              const cardActiveUser = currentUser || { name: 'Guest Developer', login: 'guest', email: 'guest@campusconnect.edu' };
+              const cardActiveUser = getActiveUser(currentUser);
+              const isAdmin = cardActiveUser && (
+                (cardActiveUser.email && cardActiveUser.email.trim().toLowerCase() === 'mesthayathi04@gmail.com') ||
+                (cardActiveUser.login && cardActiveUser.login.trim().toLowerCase() === 'mesthayathi04')
+              );
               const cardIsOwner = cardActiveUser && (
+                isAdmin ||
                 (project.author_login && cardActiveUser.login && project.author_login.toLowerCase() === cardActiveUser.login.toLowerCase()) ||
                 (project.author && cardActiveUser.name && project.author.toLowerCase() === cardActiveUser.name.toLowerCase()) ||
                 (project.author_login && cardActiveUser.email && project.author_login.toLowerCase() === cardActiveUser.email.split('@')[0].toLowerCase())
@@ -332,6 +359,21 @@ const Projects: React.FC<ProjectsProps> = ({
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   e.preventDefault();
+                                  const cardActiveUser = getActiveUser(currentUser);
+                                  const isAdmin = cardActiveUser && (
+                                    (cardActiveUser.email && cardActiveUser.email.trim().toLowerCase() === 'mesthayathi04@gmail.com') ||
+                                    (cardActiveUser.login && cardActiveUser.login.trim().toLowerCase() === 'mesthayathi04')
+                                  );
+                                  const isCardOwner = cardActiveUser && (
+                                    isAdmin ||
+                                    (project.author_login && cardActiveUser.login && project.author_login.toLowerCase() === cardActiveUser.login.toLowerCase()) ||
+                                    (project.author && cardActiveUser.name && project.author.toLowerCase() === cardActiveUser.name.toLowerCase()) ||
+                                    (project.author_login && cardActiveUser.email && project.author_login.toLowerCase() === cardActiveUser.email.split('@')[0].toLowerCase())
+                                  );
+                                  if (!isCardOwner) {
+                                    addToast('error', 'You do not have permission to delete this project.');
+                                    return;
+                                  }
                                   if (window.confirm('Are you sure you want to delete this project?')) {
                                     try {
                                       if (project.id) {
@@ -360,7 +402,7 @@ const Projects: React.FC<ProjectsProps> = ({
                             e.preventDefault();
                             navigate(`/projects/${project.slug}`);
                           }}
-                          className="opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-sm"
+                          className="opacity-100 md:opacity-0 group-hover:opacity-100 translate-x-0 md:translate-x-4 group-hover:translate-x-0 transition-all duration-300 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-sm"
                         >
                           Read full story
                           <ExternalLink className="w-4 h-4" />
@@ -430,7 +472,7 @@ const ProjectDetailRouteWrapper = ({ projects, isLoading, onEdit, onDelete, onCl
       project={project}
       onEdit={onEdit}
       onDelete={onDelete}
-      currentUser={currentUser}
+      currentUser={getActiveUser(currentUser)}
     />
   );
 };

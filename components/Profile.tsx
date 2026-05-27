@@ -49,6 +49,10 @@ interface ProfileProps {
 const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, profileBackground, onLoginSuccess, onLogout }) => {
     const isOwnProfile = currentUser?.login === targetUser?.login || (!targetUser?.login && !!currentUser);
     const displayUser = targetUser || currentUser;
+    const isProfileAdmin = displayUser && (
+        (displayUser.email && displayUser.email.trim().toLowerCase() === 'mesthayathi04@gmail.com') ||
+        (displayUser.login && displayUser.login.trim().toLowerCase() === 'mesthayathi04')
+    );
     const [isEditing, setIsEditing] = React.useState(false);
 
 
@@ -293,7 +297,15 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, targetUser, addToast, pr
                                 </div>
                             ) : (
                                 <>
-                                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-1">{profileData.name || displayUser.name || displayUser.login}</h1>
+                                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-1 flex items-center justify-center md:justify-start gap-2 flex-wrap">
+                                        <span>{profileData.name || displayUser.name || displayUser.login}</span>
+                                        {isProfileAdmin && (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-xs font-black tracking-widest uppercase border border-indigo-200 dark:border-indigo-500/30 shadow-md">
+                                                <Award className="w-3.5 h-3.5" />
+                                                Super Admin
+                                            </span>
+                                        )}
+                                    </h1>
                                     <p className="text-indigo-600 dark:text-indigo-400 font-bold text-xs md:text-sm tracking-widest uppercase">{profileData.branch}</p>
                                 </>
                             )}

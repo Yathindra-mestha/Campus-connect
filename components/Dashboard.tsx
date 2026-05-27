@@ -11,6 +11,21 @@ import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../utils/firebase';
 
 const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handleNavigate: (path: string) => void; onProfileUpdate?: () => void }) => {
+    const getActiveUser = (u: any) => {
+        if (u && u.email) return u;
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('googleUser');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && parsed.email) return parsed;
+                } catch (e) {}
+            }
+        }
+        return u;
+    };
+    const activeUser = getActiveUser(user);
+
     const [userProjects, setUserProjects] = useState<ProjectData[]>([]);
     const [userPosts, setUserPosts] = useState<any[]>([]);
     const [userRank, setUserRank] = useState<{ rank: number; points: number } | null>(null);
@@ -18,34 +33,36 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
     const [isDeletingPost, setIsDeletingPost] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({
-        name: user?.name || '',
-        branch: user?.branch || '',
-        avatar_url: user?.avatar_url || '',
-        linkedin_url: user?.linkedin_url || '',
-        github_url: user?.github_url || ''
+        name: activeUser?.name || '',
+        branch: activeUser?.branch || '',
+        avatar_url: activeUser?.avatar_url || '',
+        linkedin_url: activeUser?.linkedin_url || '',
+        github_url: activeUser?.github_url || ''
     });
 
     useEffect(() => {
-        if (user) {
+        const activeUser = getActiveUser(user);
+        if (activeUser) {
             setEditData({
-                name: user.name || '',
-                branch: user.branch || '',
-                avatar_url: user.avatar_url || '',
-                linkedin_url: user.linkedin_url || '',
-                github_url: user.github_url || ''
+                name: activeUser.name || '',
+                branch: activeUser.branch || '',
+                avatar_url: activeUser.avatar_url || '',
+                linkedin_url: activeUser.linkedin_url || '',
+                github_url: activeUser.github_url || ''
             });
         }
     }, [user]);
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user) return;
-        const userId = user.id || user.email;
+        const activeUser = getActiveUser(user);
+        if (!activeUser) return;
+        const userId = activeUser.id || activeUser.email;
         if (!userId) return;
 
         try {
             const updatedUser = {
-                ...user,
+                ...activeUser,
                 name: editData.name,
                 branch: editData.branch,
                 avatar_url: editData.avatar_url,
@@ -70,7 +87,8 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
     };
 
     const fetchUserPosts = async () => {
-        const userId = user?.id || user?.email;
+        const activeUser = getActiveUser(user);
+        const userId = activeUser?.id || activeUser?.email;
         if (!userId) return;
         try {
             if (typeof window !== 'undefined') {
@@ -78,7 +96,7 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                 if (localDiscussionsStr) {
                     const allDiscussions = JSON.parse(localDiscussionsStr);
                     const userP = allDiscussions.filter(
-                        (p: any) => p.author_id === userId || p.author_id === user.id || p.author_id === user.login
+                        (p: any) => p.author_id === userId || p.author_id === activeUser.id || p.author_id === activeUser.login
                     );
                     setUserPosts(userP);
                     return;
@@ -126,7 +144,8 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
 
     useEffect(() => {
         const fetchData = async () => {
-            if (!user) {
+            const activeUser = getActiveUser(user);
+            if (!activeUser) {
                 setLoading(false);
                 return;
             }
@@ -141,18 +160,23 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                 // Also fetch user posts
                 fetchUserPosts();
 
-                const loggedInUserLogin = user.login || user.email?.split('@')[0] || user.name?.replace(/\s+/g, '').toLowerCase();
+                const loggedInUserLogin = activeUser.login || activeUser.email?.split('@')[0] || activeUser.name?.replace(/\s+/g, '').toLowerCase();
+                const isAdmin = activeUser && (
+                    (activeUser.email && activeUser.email.trim().toLowerCase() === 'mesthayathi04@gmail.com') ||
+                    (activeUser.login && activeUser.login.trim().toLowerCase() === 'mesthayathi04')
+                );
 
                 const myProjects = allProjects.filter(
                     (p) =>
+                        isAdmin ||
                         p.author_login?.toLowerCase() === loggedInUserLogin?.toLowerCase() ||
-                        p.author?.toLowerCase() === user.name?.toLowerCase()
+                        p.author?.toLowerCase() === activeUser.name?.toLowerCase()
                 );
                 setUserProjects(myProjects);
 
                 const rankData = leaderboard.find((u: any) =>
                     u.login?.toLowerCase() === loggedInUserLogin?.toLowerCase() ||
-                    u.name?.toLowerCase() === user.name?.toLowerCase()
+                    u.name?.toLowerCase() === activeUser.name?.toLowerCase()
                 );
 
                 if (rankData) {
@@ -169,7 +193,7 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
         fetchData();
     }, [user]);
 
-    if (!user) {
+    if (!activeUser) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
                 <ShieldAlert className="w-20 h-20 text-indigo-500 mb-6" />
@@ -206,12 +230,12 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6"
+                className="mb-12 flex flex-col lg:flex-row lg:items-center justify-between gap-6"
             >
-                <div className="flex items-center gap-6">
+                <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6">
                     <div className="relative group">
                         <div className="w-24 h-24 rounded-3xl overflow-hidden border-4 border-white dark:border-[#1e1e1e] shadow-xl">
-                            <img src={user.avatar_url || `https://ui-avatars.com/api/?name=${user.name}`} alt={user.name} className="w-full h-full object-cover" />
+                            <img src={activeUser.avatar_url || `https://ui-avatars.com/api/?name=${activeUser.name}`} alt={activeUser.name} className="w-full h-full object-cover" />
                         </div>
                         <button
                             onClick={() => setIsEditing(true)}
@@ -221,29 +245,40 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                         </button>
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black text-slate-900 dark:text-white">Hi, {user.name}</h1>
+                        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
+                            <span>Hi, {activeUser.name}</span>
+                            {activeUser && (
+                                (activeUser.email && activeUser.email.trim().toLowerCase() === 'mesthayathi04@gmail.com') ||
+                                (activeUser.login && activeUser.login.trim().toLowerCase() === 'mesthayathi04')
+                            ) && (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-xs font-black tracking-widest uppercase border border-indigo-200 dark:border-indigo-500/30 shadow-md">
+                                    <Trophy className="w-3.5 h-3.5 fill-current" />
+                                    Super Admin
+                                </span>
+                            )}
+                        </h1>
                         <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your projects and profile connection.</p>
                     </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full lg:w-auto">
                     <a
                         href="/admin"
-                        className="px-6 py-3 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+                        className="px-6 py-3 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl font-bold flex items-center justify-center sm:justify-start gap-2 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors w-full sm:w-auto"
                     >
                         <Settings className="w-5 h-5" />
                         CMS Admin
                     </a>
                     <button
                         onClick={() => handleNavigate('members')}
-                        className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold flex items-center gap-2 hover:opacity-90 transition-opacity"
+                        className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold flex items-center justify-center sm:justify-start gap-2 hover:opacity-90 transition-opacity w-full sm:w-auto"
                     >
                         <UserIcon className="w-5 h-5" />
                         Explore Members
                     </button>
                     <button
                         onClick={() => setIsEditing(true)}
-                        className="px-6 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors"
+                        className="px-6 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl font-bold flex items-center justify-center sm:justify-start gap-2 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors w-full sm:w-auto"
                     >
                         <Edit3 className="w-5 h-5" />
                         Edit Profile
@@ -380,7 +415,12 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                 <div className="lg:col-span-2 space-y-12">
                     <div className="bg-white dark:bg-[#1e1e1e] rounded-3xl border border-slate-200 dark:border-white/5 p-8 md:p-10">
                         <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Your Recent Projects</h2>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+                                {(activeUser && (
+                                    (activeUser.email && activeUser.email.trim().toLowerCase() === 'mesthayathi04@gmail.com') ||
+                                    (activeUser.login && activeUser.login.trim().toLowerCase() === 'mesthayathi04')
+                                )) ? 'Manage All Projects (Admin)' : 'Your Recent Projects'}
+                            </h2>
                             <button
                                 onClick={() => handleNavigate('projects')}
                                 className="text-indigo-600 dark:text-indigo-400 hover:opacity-70 font-black flex items-center gap-2 transition-opacity"
@@ -485,11 +525,11 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                                 <Mail className="w-5 h-5 text-indigo-500" />
                                 <div className="overflow-hidden">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email Address</p>
-                                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{user.email}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{activeUser.email}</p>
                                 </div>
                             </div>
-                            {user.linkedin_url && (
-                                <a href={user.linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-[#0077b5]/10 hover:bg-[#0077b5]/20 transition-colors group">
+                            {activeUser.linkedin_url && (
+                                <a href={activeUser.linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-[#0077b5]/10 hover:bg-[#0077b5]/20 transition-colors group">
                                     <Linkedin className="w-5 h-5 text-[#0077b5]" />
                                     <div className="overflow-hidden">
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">LinkedIn</p>
@@ -498,8 +538,8 @@ const Dashboard = ({ user, handleNavigate, onProfileUpdate }: { user: any; handl
                                     <ExternalLink className="w-4 h-4 ml-auto text-slate-400" />
                                 </a>
                             )}
-                            {user.github_url && (
-                                <a href={user.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900 dark:bg-white/10 hover:bg-slate-800 dark:hover:bg-white/20 transition-colors group">
+                            {activeUser.github_url && (
+                                <a href={activeUser.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900 dark:bg-white/10 hover:bg-slate-800 dark:hover:bg-white/20 transition-colors group">
                                     <Github className="w-5 h-5 text-slate-400 group-hover:text-white" />
                                     <div className="overflow-hidden">
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">GitHub</p>

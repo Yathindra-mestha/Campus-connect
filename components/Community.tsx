@@ -108,6 +108,7 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
   const [activeTab, setActiveTab] = useState('forums');
   const [forumCategory, setForumCategory] = useState('all');
   const [isNewPostModalOpen, setIsNewPostModalOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [isLoadingDiscussions, setIsLoadingDiscussions] = useState(true);
@@ -276,7 +277,114 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
   return (
     <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-[#1e1f22] text-slate-900 dark:text-[#dbdee1] overflow-hidden">
 
-      {/* Premium Sidebar */}
+      {/* Mobile Drawer Navigation Sidebar */}
+      <AnimatePresence>
+        {isMobileSidebarOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] md:hidden"
+            />
+            {/* Slide-out Sidebar drawer */}
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-[#2b2d31] flex flex-col border-r border-slate-200 dark:border-white/5 z-[90] md:hidden shadow-2xl"
+            >
+              <div className="h-16 flex items-center px-6 border-b border-black/5 dark:border-white/5 justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">Hub Menu</span>
+                </div>
+                <button
+                  onClick={() => setIsMobileSidebarOpen(false)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl text-slate-500"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
+                <section>
+                  <div className="px-2 mb-3">
+                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] px-1">Navigation</span>
+                  </div>
+                  <div className="space-y-1">
+                    {FORUM_CATEGORIES.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setActiveTab('forums');
+                          setForumCategory(cat.id);
+                          setIsMobileSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all group ${activeTab === 'forums' && forumCategory === cat.id
+                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none'
+                          : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
+                          }`}
+                      >
+                        <cat.icon className={`w-4 h-4 ${activeTab === 'forums' && forumCategory === cat.id ? 'text-white' : 'group-hover:text-indigo-600'}`} />
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                <section>
+                  <div className="px-2 mb-3 flex justify-between items-center group">
+                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] px-1">Channels</span>
+                  </div>
+                  <div className="space-y-1">
+                    {CHANNELS.map(channel => (
+                      <button
+                        key={channel.id}
+                        onClick={() => {
+                          setActiveTab(channel.id);
+                          setIsMobileSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all group ${activeTab === channel.id
+                          ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white'
+                          : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                          }`}
+                      >
+                        <Hash className={`w-4 h-4 ${activeTab === channel.id ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'}`} />
+                        {channel.name}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              <div className="p-4 border-t border-black/5 dark:border-white/5 mt-auto">
+                <div className="bg-slate-50 dark:bg-black/20 p-3 rounded-2xl flex items-center gap-3">
+                  <div className="relative">
+                    <img
+                      src={"https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky"}
+                      className="w-10 h-10 rounded-full"
+                      alt="user"
+                    />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-zinc-800" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-black truncate text-slate-950 dark:text-white">Anonymous Student</p>
+                    <p className="text-[10px] text-slate-500">Contributor</p>
+                  </div>
+                </div>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Premium Sidebar (Desktop only) */}
       <aside className="w-72 bg-white/80 dark:bg-[#2b2d31]/90 backdrop-blur-xl flex flex-col border-r border-slate-200 dark:border-white/5 hidden md:flex z-30">
         <div className="h-16 flex items-center px-6 border-b border-black/5 dark:border-white/5">
           <div className="flex items-center gap-3">
@@ -297,12 +405,12 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
                 <button
                   key={cat.id}
                   onClick={() => { setActiveTab('forums'); setForumCategory(cat.id); }}
-                  className={`w - full flex items - center gap - 3 px - 3 py - 2.5 rounded - xl text - sm font - bold transition - all group ${activeTab === 'forums' && forumCategory === cat.id
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all group ${activeTab === 'forums' && forumCategory === cat.id
                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none'
                     : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
-                    } `}
+                    }`}
                 >
-                  <cat.icon className={`w - 4 h - 4 ${activeTab === 'forums' && forumCategory === cat.id ? 'text-white' : 'group-hover:text-indigo-600'} `} />
+                  <cat.icon className={`w-4 h-4 ${activeTab === 'forums' && forumCategory === cat.id ? 'text-white' : 'group-hover:text-indigo-600'}`} />
                   {cat.name}
                 </button>
               ))}
@@ -312,19 +420,18 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
           <section>
             <div className="px-2 mb-3 flex justify-between items-center group">
               <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] px-1">Channels</span>
-              <Plus className="w-4 h-4 text-slate-400 cursor-pointer hover:text-indigo-600 transition-colors" />
             </div>
             <div className="space-y-1">
               {CHANNELS.map(channel => (
                 <button
                   key={channel.id}
                   onClick={() => setActiveTab(channel.id)}
-                  className={`w - full flex items - center gap - 3 px - 3 py - 2.5 rounded - xl text - sm font - bold transition - all group ${activeTab === channel.id
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all group ${activeTab === channel.id
                     ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white'
                     : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                    } `}
+                    }`}
                 >
-                  <Hash className={`w - 4 h - 4 ${activeTab === channel.id ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'} `} />
+                  <Hash className={`w-4 h-4 ${activeTab === channel.id ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'}`} />
                   {channel.name}
                 </button>
               ))}
@@ -341,13 +448,12 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
                 className="w-10 h-10 rounded-full"
                 alt="user"
               />
-              <div className={`absolute - bottom - 0.5 - right - 0.5 w - 3 h - 3 bg-green-500 rounded - full border - 2 border - white dark: border - zinc - 800`} />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-zinc-800" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black truncate">Anonymous Student</p>
               <p className="text-[10px] text-slate-500">Contributor</p>
             </div>
-            <Settings className="w-4 h-4 text-slate-400 cursor-pointer hover:text-indigo-600 transition-colors" />
           </div>
         </div>
       </aside>
@@ -363,18 +469,25 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
               exit={{ opacity: 0, y: -10 }}
               className="flex-1 flex flex-col overflow-hidden"
             >
-              <header className="h-16 border-b border-slate-100 dark:border-white/5 flex items-center px-8 justify-between bg-white/50 dark:bg-[#313338]/50 backdrop-blur-md sticky top-0 z-10">
+              <header className="h-16 border-b border-slate-100 dark:border-white/5 flex items-center px-4 sm:px-8 justify-between bg-white/50 dark:bg-[#313338]/50 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-3">
-                  <div className="bg-indigo-50 dark:bg-indigo-500/10 p-2 rounded-xl">
+                  <button
+                    onClick={() => setIsMobileSidebarOpen(true)}
+                    className="p-2 mr-1 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl md:hidden text-slate-600 dark:text-slate-300"
+                    title="Open Menu"
+                  >
+                    <Filter className="w-5 h-5" />
+                  </button>
+                  <div className="bg-indigo-50 dark:bg-indigo-500/10 p-2 rounded-xl hidden sm:block">
                     <Layout className="w-5 h-5 text-indigo-600" />
                   </div>
-                  <h3 className="font-black text-lg">{FORUM_CATEGORIES.find(c => c.id === forumCategory)?.name || 'Forums'}</h3>
+                  <h3 className="font-black text-lg truncate max-w-[150px] sm:max-w-none">{FORUM_CATEGORIES.find(c => c.id === forumCategory)?.name || 'Forums'}</h3>
                 </div>
                 <button
                   onClick={() => {
                     setIsNewPostModalOpen(true);
                   }}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 sm:px-6 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
                 >
                   NEW POST
                 </button>
@@ -447,11 +560,18 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
               exit={{ opacity: 0, scale: 0.98 }}
               className="flex-1 flex flex-col"
             >
-              <header className="h-16 border-b border-black/5 dark:border-white/5 flex items-center px-8 bg-white/50 dark:bg-[#313338]/50 backdrop-blur-md">
-                <Hash className="w-6 h-6 mr-3 text-indigo-600" />
-                <div className="flex flex-col">
-                  <h3 className="font-extrabold">{activeChannel?.name}</h3>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-widest">{activeChannel?.description}</span>
+              <header className="h-16 border-b border-black/5 dark:border-white/5 flex items-center px-4 sm:px-8 bg-white/50 dark:bg-[#313338]/50 backdrop-blur-md">
+                <button
+                  onClick={() => setIsMobileSidebarOpen(true)}
+                  className="p-2 mr-1 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl md:hidden text-slate-600 dark:text-slate-300"
+                  title="Open Menu"
+                >
+                  <Filter className="w-5 h-5" />
+                </button>
+                <Hash className="w-6 h-6 mr-3 text-indigo-600 flex-shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <h3 className="font-extrabold truncate">{activeChannel?.name}</h3>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest truncate">{activeChannel?.description}</span>
                 </div>
               </header>
 

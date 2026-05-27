@@ -50,7 +50,7 @@ const Home = ({ setActiveSection, stats, featuredProjects, topContributors, onEx
             {/* Stats Section */}
             <section className="py-12 relative z-10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 text-center">
                         <div className="flex flex-col items-center justify-center">
                             <span className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-2 transition-colors duration-300"><AnimatedCounter from={0} to={stats.students} />+</span>
                             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider transition-colors duration-300">Total Students</span>

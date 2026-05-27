@@ -23,8 +23,27 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
 }) => {
     if (!isOpen || !project) return null;
 
-    const activeUser = currentUser || { name: 'Guest Developer', login: 'guest', email: 'guest@campusconnect.edu' };
+    const getActiveUser = (u: any) => {
+        if (u && u.email) return u;
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('googleUser');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && parsed.email) return parsed;
+                } catch (e) {}
+            }
+        }
+        return u || { name: 'Guest Developer', login: 'guest', email: 'guest@campusconnect.edu' };
+    };
+
+    const activeUser = getActiveUser(currentUser);
+    const isAdmin = activeUser && (
+        (activeUser.email && activeUser.email.trim().toLowerCase() === 'mesthayathi04@gmail.com') ||
+        (activeUser.login && activeUser.login.trim().toLowerCase() === 'mesthayathi04')
+    );
     const isOwner = activeUser && (
+        isAdmin ||
         (project.author_login && activeUser.login && project.author_login.toLowerCase() === activeUser.login.toLowerCase()) ||
         (project.author && activeUser.name && project.author.toLowerCase() === activeUser.name.toLowerCase()) ||
         (project.author_login && activeUser.email && project.author_login.toLowerCase() === activeUser.email.split('@')[0].toLowerCase())
@@ -60,7 +79,7 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
     return (
         <div className="fixed inset-0 z-[200] flex flex-col bg-white dark:bg-slate-950 overflow-hidden animate-in fade-in duration-300">
             {/* Top Navigation Bar - Premium Style */}
-            <header className="flex items-center justify-between px-6 h-16 border-b border-slate-100 dark:border-white/5 bg-white/70 dark:bg-slate-950/70 backdrop-blur-2xl z-50 sticky top-0">
+            <header className="flex items-center justify-between px-4 sm:px-6 h-16 border-b border-slate-100 dark:border-white/5 bg-white/70 dark:bg-slate-950/70 backdrop-blur-2xl z-50 sticky top-0">
                 <div className="flex items-center gap-6">
                     <button
                         onClick={onClose}
@@ -156,32 +175,32 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
                     onScroll={handleScroll}
                     className="flex-1 overflow-y-auto custom-scrollbar relative bg-white dark:bg-slate-950"
                 >
-                    <div className="max-w-5xl mx-auto px-6 py-12 lg:px-16 lg:py-20 flex flex-col xl:flex-row gap-16">
+                    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 lg:px-16 lg:py-20 flex flex-col xl:flex-row gap-16">
                         {/* Center Column: Documentation Body */}
                         <article className="flex-1 min-w-0">
                             {/* Project Banner/Image */}
                             {project.image && (
-                                <div id="overview" className="mb-16 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-indigo-500/10 border border-slate-200/50 dark:border-white/5 bg-slate-100 dark:bg-slate-900">
+                                <div id="overview" className="mb-12 sm:mb-16 rounded-3xl sm:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-indigo-500/10 border border-slate-200/50 dark:border-white/5 bg-slate-100 dark:bg-slate-900">
                                     <img
                                         src={project.image}
                                         alt={project.title}
-                                        className="w-full aspect-[21/9] object-cover hover:scale-105 transition-transform duration-700"
+                                        className="w-full aspect-[16/9] sm:aspect-[21/9] object-cover hover:scale-105 transition-transform duration-700"
                                     />
                                 </div>
                             )}
 
-                            <div className="mb-16">
+                            <div className="mb-12 sm:mb-16">
                                 <header className="max-w-3xl">
-                                    <div className="flex items-center gap-3 mb-8">
+                                    <div className="flex items-center gap-3 mb-6 sm:mb-8">
                                         <div className="h-[2px] w-12 bg-indigo-500" />
                                         <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em]">
                                             Featured Project
                                         </span>
                                     </div>
-                                    <h1 className="text-5xl lg:text-7xl font-black text-slate-900 dark:text-white mb-8 tracking-tight leading-[1.1]">
+                                    <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-slate-900 dark:text-white mb-6 sm:mb-8 tracking-tight leading-[1.1] break-words">
                                         {project.title}
                                     </h1>
-                                    <p className="text-xl lg:text-2xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                    <p className="text-lg sm:text-xl lg:text-2xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
                                         {project.description}
                                     </p>
                                 </header>
