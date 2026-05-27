@@ -31,11 +31,20 @@ const getActiveUser = (currentUser: any) => {
   return currentUser || { name: 'Guest Developer', login: 'guest', email: 'guest@campusconnect.edu' };
 };
 
+interface ProjectsProps {
+  autoOpenUploadProject?: boolean;
+  onUploadProjectHandled?: () => void;
+  addToast: (type: 'success' | 'error' | 'info', message: string) => void;
+  currentUser: any;
+  onProjectsChange?: () => void;
+}
+
 const Projects: React.FC<ProjectsProps> = ({
   autoOpenUploadProject,
   onUploadProjectHandled,
   addToast,
-  currentUser
+  currentUser,
+  onProjectsChange
 }) => {
   const [activeTab, setActiveTab] = useState('all');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -144,6 +153,7 @@ const Projects: React.FC<ProjectsProps> = ({
           project={editingProject}
           onSuccess={() => {
             fetchProjects();
+            onProjectsChange?.();
           }}
           addToast={addToast}
           currentUser={currentUser}
@@ -181,6 +191,7 @@ const Projects: React.FC<ProjectsProps> = ({
                     if (p.id) {
                       await deleteDoc(doc(db, 'projects', String(p.id)));
                       setProjects(prev => prev.filter(proj => proj.id !== p.id));
+                      onProjectsChange?.();
                     }
                     addToast('success', 'Project deleted successfully.');
                     navigate('/projects');
@@ -379,6 +390,7 @@ const Projects: React.FC<ProjectsProps> = ({
                                       if (project.id) {
                                         await deleteDoc(doc(db, 'projects', String(project.id)));
                                         setProjects(prev => prev.filter(proj => proj.id !== project.id));
+                                        onProjectsChange?.();
                                       }
                                       addToast('success', 'Project deleted successfully.');
                                     } catch (err) {
