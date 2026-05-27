@@ -75,7 +75,7 @@ const App = () => {
   });
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
+  const navbarRef = useRef<HTMLElement>(null);
   const lastScrollYRef = useRef(0);
   const [profileBackground, setProfileBackground] = useState<'default' | 'landscape'>(() => {
     if (typeof window !== 'undefined') {
@@ -94,18 +94,22 @@ const App = () => {
 
         // If mobile menu is open, don't hide the navbar
         if (isMenuOpen) {
-          setIsVisible(true);
+          const navbar = navbarRef.current;
+          if (navbar) navbar.classList.remove('nav-header-hidden');
           return;
         }
 
         const lastScrollY = lastScrollYRef.current;
+        const navbar = navbarRef.current;
 
-        if (currentScrollY > lastScrollY && currentScrollY > 80) {
-          // Scrolling down
-          setIsVisible(false);
-        } else {
-          // Scrolling up
-          setIsVisible(true);
+        if (navbar) {
+          if (currentScrollY > lastScrollY && currentScrollY > 80) {
+            // Scrolling down - hide navbar directly via DOM class
+            navbar.classList.add('nav-header-hidden');
+          } else {
+            // Scrolling up - show navbar directly via DOM class
+            navbar.classList.remove('nav-header-hidden');
+          }
         }
 
         lastScrollYRef.current = currentScrollY;
@@ -315,15 +319,9 @@ const App = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-slate-50 font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900 selection:text-indigo-900 dark:selection:text-indigo-100 flex flex-col transition-colors duration-300 relative">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       {/* Navigation */}
-      <motion.header
-        initial="visible"
-        animate={isVisible ? "visible" : "hidden"}
-        variants={{
-          visible: { y: 0, opacity: 1 },
-          hidden: { y: -100, opacity: 0 }
-        }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed top-0 left-0 right-0 z-50 w-full"
+      <header
+        ref={navbarRef}
+        className="fixed top-0 left-0 right-0 z-50 w-full nav-header"
       >
         <nav className="bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10 transition-colors duration-300">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -464,7 +462,7 @@ const App = () => {
             </div>
           </div>
         </nav>
-      </motion.header>
+      </header>
 
       {/* Mobile Bottom Navigation Bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#121212]/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 pb-safe pt-2 px-2 shadow-[0_-8px_30px_rgb(0,0,0,0.12)]">

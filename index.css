@@ -22,6 +22,18 @@
 }
 
 @layer utilities {
+  .nav-header {
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .nav-header-hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
   .glass-panel {
     @apply bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10;
   }
