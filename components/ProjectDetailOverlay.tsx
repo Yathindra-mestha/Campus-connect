@@ -163,7 +163,7 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
                     onScroll={handleScroll}
                     className="flex-1 overflow-y-auto custom-scrollbar relative bg-white dark:bg-[#070709]"
                 >
-                    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 lg:px-16 lg:py-20 flex flex-col xl:flex-row gap-16">
+                    <div className="max-w-7xl mx-auto px-6 sm:px-10 py-12 lg:px-16 lg:py-20 flex flex-col xl:flex-row gap-20">
                         {/* Center Column: Documentation Body */}
                         <article className="flex-1 min-w-0">
                             {/* Project Banner/Image */}
@@ -202,8 +202,8 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
                                             const id = props.children?.toString().toLowerCase().replace(/[^a-z0-9]+/g, '-');
                                             const index = sections.findIndex(s => s.id === id);
                                             return (
-                                                <h2 id={id} className="group relative scroll-mt-24 flex items-center gap-4 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-16 mb-6 pb-3 border-b border-slate-100 dark:border-white/5">
-                                                    <span className="text-indigo-500/30 dark:text-indigo-400/25 font-black text-3xl sm:text-4xl tabular-nums">
+                                                <h2 id={id} className="group relative scroll-mt-24 flex items-center gap-4 text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mt-24 mb-8 pb-3 border-b border-slate-100 dark:border-white/5">
+                                                    <span className="text-indigo-500/30 dark:text-indigo-400/25 font-black text-4xl sm:text-5xl tabular-nums">
                                                         {String(index >= 0 ? index : 0).padStart(2, '0')}
                                                     </span>
                                                     <span>{props.children}</span>
@@ -211,44 +211,44 @@ const ProjectDetailOverlay: React.FC<ProjectDetailOverlayProps> = ({
                                             );
                                         },
                                         h3: ({ node, ...props }) => (
-                                            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-10 mb-4">
+                                            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-16 mb-6">
                                                 {props.children}
                                             </h3>
                                         ),
                                         p: ({ node, ...props }) => (
-                                            <p className="text-slate-600 dark:text-slate-400 text-[17px] leading-relaxed mb-6 font-medium">
+                                            <p className="text-slate-650 dark:text-slate-300 text-[18px] leading-[1.85] mb-8 font-normal">
                                                 {props.children}
                                             </p>
                                         ),
                                         ul: ({ node, ...props }) => (
-                                            <ul className="list-disc pl-6 space-y-2 mb-6 text-slate-600 dark:text-slate-400 text-[17px] font-medium">
+                                            <ul className="list-disc pl-8 space-y-3 mb-8 text-slate-650 dark:text-slate-300 text-[18px] leading-[1.8] font-normal">
                                                 {props.children}
                                             </ul>
                                         ),
                                         ol: ({ node, ...props }) => (
-                                            <ol className="list-decimal pl-6 space-y-2 mb-6 text-slate-600 dark:text-slate-400 text-[17px] font-medium">
+                                            <ol className="list-decimal pl-8 space-y-3 mb-8 text-slate-650 dark:text-slate-300 text-[18px] leading-[1.8] font-normal">
                                                 {props.children}
                                             </ol>
                                         ),
                                         li: ({ node, ...props }) => (
-                                            <li className="pl-1 text-slate-600 dark:text-slate-400">
+                                            <li className="pl-2 text-slate-650 dark:text-slate-300">
                                                 {props.children}
                                             </li>
                                         ),
                                         blockquote: ({ node, ...props }) => (
-                                            <blockquote className="border-l-4 border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/5 p-6 rounded-3xl text-xl italic font-medium my-8 text-slate-700 dark:text-slate-350">
+                                            <blockquote className="border-l-4 border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/5 p-8 rounded-[2rem] text-xl sm:text-2xl italic font-medium my-12 text-slate-700 dark:text-slate-200">
                                                 {props.children}
                                             </blockquote>
                                         ),
                                         pre: ({ node, ...props }) => (
-                                            <pre className="bg-slate-900 dark:bg-[#0c0c0e] border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-xl my-8 overflow-x-auto custom-scrollbar">
+                                            <pre className="bg-slate-900 dark:bg-[#0c0c0e] border border-slate-200 dark:border-white/5 rounded-[2rem] p-8 shadow-xl my-12 overflow-x-auto custom-scrollbar">
                                                 {props.children}
                                             </pre>
                                         ),
                                         code: ({ node, className, children, ...props }) => {
                                             const isInline = !className;
                                             return isInline ? (
-                                                <code className="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-lg font-bold text-sm">
+                                                <code className="text-indigo-650 dark:text-indigo-455 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-lg font-bold text-sm">
                                                     {children}
                                                 </code>
                                             ) : (
