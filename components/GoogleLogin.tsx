@@ -4,7 +4,7 @@ import { ENV_CONFIG } from '../src/constants/config';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../utils/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, CheckCircle2, AlertCircle, ArrowRight, User } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, ArrowRight, User, Sparkles, ChevronLeft } from 'lucide-react';
 
 // Declaration for google accounts id
 declare global {
@@ -23,12 +23,20 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
     const navigate = useNavigate();
     const buttonId = `google-signin-button-${useId().replace(/:/g, '')}`;
 
-    // Handle Onboarding modal state
+    // Handle Onboarding wizard state
     const [showUsernameModal, setShowUsernameModal] = useState(false);
+    const [onboardingStep, setOnboardingStep] = useState<1 | 2>(1);
+    
+    // Step 1: Favorite Name state
+    const [favoriteNameInput, setFavoriteNameInput] = useState('');
+    const [favoriteNameError, setFavoriteNameError] = useState('');
+
+    // Step 2: Unique Handle state
     const [usernameInput, setUsernameInput] = useState('');
     const [usernameError, setUsernameError] = useState('');
     const [usernameSuccess, setUsernameSuccess] = useState('');
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+    
     const [isSaving, setIsSaving] = useState(false);
     const [pendingUserInfo, setPendingUserInfo] = useState<any>(null);
 
@@ -49,7 +57,22 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
         }
     };
 
-    // Live Username Validation Check
+    // Step 1: Name Validation Check
+    useEffect(() => {
+        if (showUsernameModal && onboardingStep === 1) {
+            if (!favoriteNameInput.trim()) {
+                setFavoriteNameError('Favorite name cannot be empty.');
+            } else if (favoriteNameInput.trim().length < 2) {
+                setFavoriteNameError('Name must be at least 2 characters.');
+            } else if (favoriteNameInput.trim().length > 30) {
+                setFavoriteNameError('Name must be 30 characters or less.');
+            } else {
+                setFavoriteNameError('');
+            }
+        }
+    }, [favoriteNameInput, showUsernameModal, onboardingStep]);
+
+    // Step 2: Live Username Validation Check
     useEffect(() => {
         if (!usernameInput) {
             setUsernameError('');
@@ -137,16 +160,20 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
                     onLoginSuccess(userInfo);
                     navigate('/profile');
                 } else {
-                    // New User! Force handle selection onboarding modal
+                    // New User! Force favorite name & handle selection onboarding modal
                     setPendingUserInfo(userInfo);
+                    setFavoriteNameInput(userInfo.name || '');
                     setUsernameInput(userInfo.login); // Pre-fill with email slug
+                    setOnboardingStep(1);
                     setShowUsernameModal(true);
                 }
             } catch (e) {
                 console.error('Failed email-query sync on login:', e);
                 // Fallback to pre-fill onboarding handle just in case query fails
                 setPendingUserInfo(userInfo);
+                setFavoriteNameInput(userInfo.name || '');
                 setUsernameInput(userInfo.login);
+                setOnboardingStep(1);
                 setShowUsernameModal(true);
             }
         } else {
@@ -156,10 +183,11 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
 
     const handleConfirmUsername = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!usernameSuccess || isCheckingUsername || isSaving || !pendingUserInfo) return;
+        if (!usernameSuccess || isCheckingUsername || isSaving || !pendingUserInfo || favoriteNameError) return;
 
         setIsSaving(true);
         const finalUsername = usernameInput.toLowerCase().trim();
+        const finalFavoriteName = favoriteNameInput.trim();
 
         try {
             // Write new user details to Firestore 'users' collection under final handle key
@@ -167,7 +195,7 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
             const userProfile = {
                 id: pendingUserInfo.id,
                 login: finalUsername,
-                name: pendingUserInfo.name,
+                name: finalFavoriteName,
                 email: pendingUserInfo.email,
                 avatar_url: pendingUserInfo.avatar_url,
                 branch: pendingUserInfo.branch || 'Computer Science • CSE',
@@ -181,6 +209,7 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
 
             const completeUserInfo = {
                 ...pendingUserInfo,
+                name: finalFavoriteName,
                 login: finalUsername,
                 github_url: `https://github.com/${finalUsername}`
             };
@@ -262,97 +291,180 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ clientId, onLoginSuccess, onL
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95, y: 20 }}
                           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                          className="bg-white dark:bg-[#121215] border border-slate-200 dark:border-white/5 w-full max-w-lg rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative overflow-hidden text-center"
+                          className="bg-white dark:bg-[#121215] border border-slate-200 dark:border-white/5 w-full max-w-lg rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative overflow-hidden"
                         >
                             <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f46e505_1px,transparent_1px),linear-gradient(to_bottom,#4f46e505_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
 
                             <div className="relative z-10 space-y-6">
-                                <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mb-2">
-                                    <User className="w-10 h-10" />
-                                </div>
-
-                                <h2 className="text-3xl md:text-4xl font-display font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                                    Choose Handle
-                                </h2>
-                                
-                                <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base font-medium leading-relaxed max-w-sm mx-auto">
-                                    Please choose a unique, personalized handle. This username will represent your profile and projects across the campus network.
-                                </p>
-
-                                <form onSubmit={handleConfirmUsername} className="space-y-4 pt-2">
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-lg">@</span>
-                                        <input
-                                            type="text"
-                                            placeholder="username"
-                                            value={usernameInput}
-                                            onChange={(e) => setUsernameInput(e.target.value.toLowerCase().trim())}
-                                            className="w-full pl-9 pr-12 py-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-inner focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none text-slate-900 dark:text-white text-lg font-semibold"
-                                            maxLength={15}
-                                            required
-                                        />
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
-                                            {isCheckingUsername && <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />}
-                                            {!isCheckingUsername && usernameSuccess && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-                                            {!isCheckingUsername && usernameError && <AlertCircle className="w-5 h-5 text-rose-500" />}
-                                        </div>
-                                    </div>
-
-                                    {/* Availability Validation Messaging */}
-                                    <AnimatePresence mode="wait">
-                                        {usernameError && (
-                                            <motion.p
-                                                key="error"
-                                                initial={{ opacity: 0, y: -10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                className="text-xs text-rose-500 font-bold flex items-center justify-center gap-1.5"
-                                            >
-                                                <AlertCircle className="w-3.5 h-3.5" /> {usernameError}
-                                            </motion.p>
-                                        )}
-                                        {usernameSuccess && (
-                                            <motion.p
-                                                key="success"
-                                                initial={{ opacity: 0, y: -10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                className="text-xs text-emerald-500 dark:text-emerald-450 font-bold flex items-center justify-center gap-1.5"
-                                            >
-                                                <CheckCircle2 className="w-3.5 h-3.5" /> {usernameSuccess}
-                                            </motion.p>
-                                        )}
-                                    </AnimatePresence>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                                {/* Navigation and Step Headers */}
+                                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/5">
+                                    {onboardingStep === 2 ? (
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                setShowUsernameModal(false);
-                                                setPendingUserInfo(null);
-                                                setUsernameInput('');
-                                                setUsernameError('');
-                                                setUsernameSuccess('');
-                                            }}
-                                            className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold rounded-2xl transition-all hover:scale-[1.02]"
+                                            onClick={() => setOnboardingStep(1)}
+                                            className="inline-flex items-center gap-1 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                         >
-                                            Cancel
+                                            <ChevronLeft className="w-4 h-4" /> Back
                                         </button>
-                                        <button
-                                            type="submit"
-                                            disabled={!usernameSuccess || isCheckingUsername || isSaving}
-                                            className="flex-1 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold rounded-2xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed shadow-lg"
-                                        >
-                                            {isSaving ? (
-                                                <>Creating Account...</>
-                                            ) : (
-                                                <>Confirm Handle <ArrowRight className="w-4 h-4" /></>
-                                            )}
-                                        </button>
+                                    ) : (
+                                        <div className="w-10" /> // spacer
+                                    )}
+                                    <span className="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                                        Step {onboardingStep} of 2
+                                    </span>
+                                    <div className="w-10" /> {/* spacer */}
+                                </div>
+
+                                <div className="text-center space-y-4">
+                                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mb-2">
+                                        {onboardingStep === 1 ? (
+                                            <Sparkles className="w-10 h-10" />
+                                        ) : (
+                                            <User className="w-10 h-10" />
+                                        )}
                                     </div>
-                                </form>
+
+                                    <h2 className="text-3xl md:text-4xl font-display font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                                        {onboardingStep === 1 ? 'Favorite Name' : 'Choose Handle'}
+                                    </h2>
+                                    
+                                    <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base font-medium leading-relaxed max-w-sm mx-auto">
+                                        {onboardingStep === 1 
+                                            ? 'Which name would you like to continue with? Enter your favorite display name to represent you across CampusConnect.' 
+                                            : 'Select a unique @handle for your profile URL, rankings, and listings across the network.'
+                                        }
+                                    </p>
+                                </div>
+
+                                {/* Onboarding Wizards Step Forms */}
+                                <AnimatePresence mode="wait">
+                                    {onboardingStep === 1 ? (
+                                        <motion.div
+                                            key="step1"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="space-y-4 pt-2"
+                                        >
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Favorite Display Name"
+                                                    value={favoriteNameInput}
+                                                    onChange={(e) => setFavoriteNameInput(e.target.value)}
+                                                    className="w-full px-5 py-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-inner focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none text-slate-900 dark:text-white text-lg font-semibold text-center"
+                                                    maxLength={30}
+                                                    required
+                                                />
+                                            </div>
+
+                                            {favoriteNameError && (
+                                                <p className="text-xs text-rose-500 font-bold flex items-center justify-center gap-1.5">
+                                                    <AlertCircle className="w-3.5 h-3.5" /> {favoriteNameError}
+                                                </p>
+                                            )}
+
+                                            <div className="flex gap-3 pt-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setShowUsernameModal(false);
+                                                        setPendingUserInfo(null);
+                                                    }}
+                                                    className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold rounded-2xl transition-all"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={!!favoriteNameError}
+                                                    onClick={() => setOnboardingStep(2)}
+                                                    className="flex-1 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold rounded-2xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/10"
+                                                >
+                                                    Next Handle <ArrowRight className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.form
+                                            key="step2"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            transition={{ duration: 0.2 }}
+                                            onSubmit={handleConfirmUsername}
+                                            className="space-y-4 pt-2"
+                                        >
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-lg">@</span>
+                                                <input
+                                                    type="text"
+                                                    placeholder="username"
+                                                    value={usernameInput}
+                                                    onChange={(e) => setUsernameInput(e.target.value.toLowerCase().trim())}
+                                                    className="w-full pl-9 pr-12 py-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-inner focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none text-slate-900 dark:text-white text-lg font-semibold"
+                                                    maxLength={15}
+                                                    required
+                                                />
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                                                    {isCheckingUsername && <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />}
+                                                    {!isCheckingUsername && usernameSuccess && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                                                    {!isCheckingUsername && usernameError && <AlertCircle className="w-5 h-5 text-rose-500" />}
+                                                </div>
+                                            </div>
+
+                                            {/* Availability Validation Messaging */}
+                                            <AnimatePresence mode="wait">
+                                                {usernameError && (
+                                                    <motion.p
+                                                        key="error"
+                                                        initial={{ opacity: 0, y: -10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -10 }}
+                                                        className="text-xs text-rose-500 font-bold flex items-center justify-center gap-1.5"
+                                                    >
+                                                        <AlertCircle className="w-3.5 h-3.5" /> {usernameError}
+                                                    </motion.p>
+                                                )}
+                                                {usernameSuccess && (
+                                                    <motion.p
+                                                        key="success"
+                                                        initial={{ opacity: 0, y: -10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -10 }}
+                                                        className="text-xs text-emerald-500 dark:text-emerald-450 font-bold flex items-center justify-center gap-1.5"
+                                                    >
+                                                        <CheckCircle2 className="w-3.5 h-3.5" /> {usernameSuccess}
+                                                    </motion.p>
+                                                )}
+                                            </AnimatePresence>
+
+                                            {/* Action Buttons */}
+                                            <div className="flex gap-3 pt-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setOnboardingStep(1)}
+                                                    className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold rounded-2xl transition-all"
+                                                >
+                                                    Back
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    disabled={!usernameSuccess || isCheckingUsername || isSaving}
+                                                    className="flex-1 py-4 bg-indigo-650 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed shadow-lg"
+                                                >
+                                                    {isSaving ? (
+                                                        <>Creating Account...</>
+                                                    ) : (
+                                                        <>Confirm & Enter <ArrowRight className="w-4 h-4" /></>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </motion.form>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         </motion.div>
                     </div>
