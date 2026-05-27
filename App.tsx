@@ -198,23 +198,30 @@ const App = () => {
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
+  const fetchStats = async () => {
+    try {
+      const [liveStats, allProjects, rankings] = await Promise.all([
+        githubService.getSystemStats(),
+        githubService.getAllProjects(),
+        githubService.getLeaderboard()
+      ]);
+      setStats(liveStats);
+      setFeaturedProjects(allProjects.slice(0, 3));
+      setLeaderboard(rankings);
+    } catch (error) {
+      console.error('Failed to fetch stats/projects/rankings', error);
+    }
+  };
+
   React.useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [liveStats, allProjects, rankings] = await Promise.all([
-          githubService.getSystemStats(),
-          githubService.getAllProjects(),
-          githubService.getLeaderboard()
-        ]);
-        setStats(liveStats);
-        setFeaturedProjects(allProjects.slice(0, 3));
-        setLeaderboard(rankings);
-      } catch (error) {
-        console.error('Failed to fetch stats/projects/rankings', error);
-      }
-    };
     fetchStats();
   }, []);
+
+  React.useEffect(() => {
+    if (location.pathname === '/') {
+      fetchStats();
+    }
+  }, [location.pathname]);
 
   // Wrapper for profile route to extract username parm
   const ProfileRouteWrapper = ({ currentUser, addToast, profileBackground }: any) => {
