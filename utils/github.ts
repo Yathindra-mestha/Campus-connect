@@ -164,7 +164,7 @@ export const githubService = {
         }
     },
 
-    async getLeaderboard() {
+    async getLeaderboard(onlyWithProjects: boolean = false) {
         try {
             // 1. Fetch projects from Firestore
             const projectsSnapshot = await getDocs(collection(db, 'projects'));
@@ -252,13 +252,16 @@ export const githubService = {
                 });
             });
 
-            // 5. Sort by points descending and calculate ranks
-            return entries
-                .sort((a, b) => b.points - a.points)
-                .map((entry, index) => ({
-                    ...entry,
-                    rank: index + 1
-                }));
+            // 6. Sort and apply parameter-based filter
+            const sorted = entries.sort((a, b) => b.points - a.points);
+            const filtered = onlyWithProjects
+                ? sorted.filter(entry => entry.projectCount > 0)
+                : sorted;
+
+            return filtered.map((entry, index) => ({
+                ...entry,
+                rank: index + 1
+            }));
         } catch (error) {
             console.error('Error getting leaderboard from Firestore:', error);
             return [];

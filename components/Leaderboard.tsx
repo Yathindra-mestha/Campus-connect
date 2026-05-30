@@ -30,7 +30,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setActiveSection, setSelected
     const fetchLeaderboard = async () => {
       setLoading(true);
       try {
-        const data = await githubService.getLeaderboard();
+        const data = await githubService.getLeaderboard(true);
         setUsers(data);
       } catch (error) {
         console.error('Failed to fetch leaderboard:', error);
