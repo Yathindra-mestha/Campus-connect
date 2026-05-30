@@ -509,9 +509,9 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
                 </div>
               </div>
             </motion.aside>
-          )}
-        </>
-      )}
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Premium Sidebar (Desktop only) */}
       <aside className="w-72 bg-white/80 dark:bg-[#2b2d31]/90 backdrop-blur-xl flex flex-col border-r border-slate-200 dark:border-white/5 hidden md:flex z-30">
