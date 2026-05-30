@@ -598,13 +598,15 @@ const App = () => {
         </div>
 
         {/* Floating Scroll to Top Button */}
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-8 right-8 w-12 h-12 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center shadow-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all transform hover:-translate-y-1 z-40 group"
-          aria-label="Scroll to top"
-        >
-          <ArrowUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
-        </button>
+        {activeSection !== 'community' && (
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-8 right-8 w-12 h-12 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center shadow-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all transform hover:-translate-y-1 z-40 group"
+            aria-label="Scroll to top"
+          >
+            <ArrowUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
+          </button>
+        )}
       </footer>
       <SearchOverlay
         isOpen={isSearchOpen}

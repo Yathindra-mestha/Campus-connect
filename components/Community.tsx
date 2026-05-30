@@ -283,8 +283,9 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
           'channel',
           activeTab
         );
-      }
       setInputText('');
+      scrollToBottom();
+      setTimeout(scrollToBottom, 50);
     } catch (error) {
       console.error('Failed to send message:', error);
       addToast('error', 'Failed to send message. Please try again.');
