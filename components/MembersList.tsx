@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, ExternalLink, User } from 'lucide-react';
+import { Search, MapPin, ExternalLink, User, MessageSquare } from 'lucide-react';
 import { githubService } from '../utils/github';
 import { Link } from 'react-router-dom';
 
@@ -134,13 +134,21 @@ const MembersList = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-4">
+                                    <div className="flex gap-3">
                                         <Link
-                                            to={`/profile/${member.id}`}
-                                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"
+                                          to={`/profile/${member.id}`}
+                                          className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-white rounded-xl font-bold text-xs transition-colors"
                                         >
-                                            <User className="w-4 h-4" />
-                                            View Profile
+                                            <User className="w-3.5 h-3.5" />
+                                            Profile
+                                        </Link>
+                                        <Link
+                                          to="/community"
+                                          state={{ chatWith: member.id }}
+                                          className="flex-1 flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition-colors"
+                                        >
+                                            <MessageSquare className="w-3.5 h-3.5" />
+                                            Chat
                                         </Link>
                                     </div>
                                 </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Mail, Github, Linkedin, ArrowLeft, User } from 'lucide-react';
+import { MapPin, Mail, Github, Linkedin, ArrowLeft, User, MessageSquare } from 'lucide-react';
 import { githubService } from '../utils/github';
 
 const PublicProfile = () => {
@@ -126,8 +126,7 @@ const PublicProfile = () => {
                                 {profile.branch || 'General Member'}
                             </div>
                         </div>
-
-                        <div className="flex gap-4">
+                        <div className="flex gap-4 items-center">
                             {profile.github_url && (
                                 <a href={profile.github_url} target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-colors">
                                     <Github className="w-6 h-6 text-slate-900 dark:text-white" />
@@ -141,6 +140,13 @@ const PublicProfile = () => {
                             <a href={`mailto:${profile.email}`} className="p-3 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors">
                                 <Mail className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                             </a>
+                            <button
+                                onClick={() => navigate('/community', { state: { chatWith: profile.id } })}
+                                className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
+                            >
+                                <MessageSquare className="w-4 h-4" />
+                                Send Message
+                            </button>
                         </div>
                     </div>
 

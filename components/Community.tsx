@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { optimizeImage } from '../utils/imageOptimization';
 import {
   Hash,
@@ -19,8 +20,11 @@ import {
   ArrowRight,
   Filter,
   Github,
-  Loader2
+  Loader2,
+  User
 } from 'lucide-react';
+import { githubService } from '../utils/github';
+import { firebaseService, ChatMessage } from '../utils/firebaseService';
 
 const CHANNELS = [
   { id: 'global', name: 'global-chat', description: 'Public discussion for everyone' },
@@ -35,7 +39,6 @@ const FORUM_CATEGORIES = [
   { id: 'general', name: 'General Discussions', icon: MessageSquare },
 ];
 
-// Discussions are now fetched from Supabase
 interface Discussion {
   id: string | number;
   author: string;
@@ -48,15 +51,6 @@ interface Discussion {
   tags: string[];
   likes: number;
   replies: number;
-}
-
-interface Message {
-  id: string;
-  sender: string;
-  avatar: string;
-  content: string;
-  timestamp: string;
-  channelId: string;
 }
 
 const MOCK_DISCUSSIONS: Discussion[] = [
@@ -105,6 +99,7 @@ interface CommunityProps {
 }
 
 const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled, addToast }) => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('forums');
   const [forumCategory, setForumCategory] = useState('all');
   const [isNewPostModalOpen, setIsNewPostModalOpen] = useState(false);
@@ -114,29 +109,19 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
   const [isLoadingDiscussions, setIsLoadingDiscussions] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newPost, setNewPost] = useState({ title: '', content: '', category: 'General', tags: '' });
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender: 'Sarah Jenkins',
-      avatar: 'https://picsum.photos/seed/sarah/100',
-      content: 'Thinking of starting a new AI study group here. Anyone in?',
-      timestamp: '2:30 PM',
-      channelId: 'global'
-    },
-    {
-      id: '2',
-      sender: 'Alex Chen',
-      avatar: 'https://picsum.photos/seed/alex/100',
-      content: "I'm definitely interested! Which stack are we looking at?",
-      timestamp: '2:35 PM',
-      channelId: 'global'
-    }
-  ]);
+  
+  const [students, setStudents] = useState<any[]>([]);
+  const [searchDMQuery, setSearchDMQuery] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const hasShownErrorRef = useRef(false);
 
   const activeChannel = CHANNELS.find(c => c.id === activeTab);
+  const isDM = activeTab.startsWith('dm_');
+  const activeDMUser = isDM
+    ? students.find(s => `dm_${s.login.toLowerCase()}` === activeTab.toLowerCase())
+    : null;
 
   // Read active user helper
   const getActiveUser = () => {
@@ -153,7 +138,37 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
     return null;
   };
 
-  // Fetch discussions from local storage, fallback to high-quality mock discussions
+  const currentUser = getActiveUser();
+
+  const isOnline = (lastActive?: string) => {
+    if (!lastActive) return false;
+    const lastActiveDate = new Date(lastActive);
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    return lastActiveDate > fiveMinutesAgo;
+  };
+
+  // Fetch registered campus members for DMs
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const list = await githubService.getLeaderboard(false);
+        setStudents(list);
+      } catch (err) {
+        console.error('Failed to load students for DMs', err);
+      }
+    };
+    fetchStudents();
+  }, []);
+
+  // Sync redirection state from Profile / Directory messaging triggers
+  useEffect(() => {
+    if (location.state && (location.state as any).chatWith) {
+      const targetLogin = (location.state as any).chatWith.toLowerCase();
+      setActiveTab(`dm_${targetLogin}`);
+    }
+  }, [location.state]);
+
+  // Fetch discussions
   const fetchDiscussions = async () => {
     setIsLoadingDiscussions(true);
     try {
@@ -180,13 +195,42 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
     fetchDiscussions();
   }, []);
 
+  // Real-time Firestore Message Subscriptions (DMs & Channels)
+  useEffect(() => {
+    if (activeTab === 'forums') return;
+
+    let unsubscribe: () => void;
+
+    if (activeTab.startsWith('dm_')) {
+      const targetLogin = activeTab.replace('dm_', '').toLowerCase();
+      const activeUser = getActiveUser();
+      
+      if (activeUser && activeUser.login) {
+        const threadId = [activeUser.login.toLowerCase(), targetLogin].sort().join('_');
+        unsubscribe = firebaseService.subscribeToMessages('direct', threadId, (newMsgs) => {
+          setMessages(newMsgs);
+        });
+      } else {
+        setMessages([]);
+      }
+    } else {
+      unsubscribe = firebaseService.subscribeToMessages('channel', activeTab, (newMsgs) => {
+        setMessages(newMsgs);
+      });
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [activeTab]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     if (activeTab !== 'forums') {
-      const timer = setTimeout(scrollToBottom, 50);
+      const timer = setTimeout(scrollToBottom, 80);
       return () => clearTimeout(timer);
     }
   }, [messages, activeTab]);
@@ -198,21 +242,47 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
     }
   }, [autoOpenNewPost, isNewPostModalOpen, onNewPostHandled]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      sender: "Anonymous Student",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous",
-      content: inputText,
-      timestamp: 'Just now',
-      channelId: activeTab
-    };
+    const activeUser = getActiveUser();
+    if (!activeUser) {
+      addToast('error', 'Please sign in with Google to send messages');
+      return;
+    }
 
-    setMessages([...messages, newMessage]);
-    setInputText('');
+    const senderId = activeUser.login || activeUser.email.split('@')[0];
+    const senderName = activeUser.name;
+    const senderAvatar = activeUser.avatar_url;
+
+    try {
+      if (activeTab.startsWith('dm_')) {
+        const targetLogin = activeTab.replace('dm_', '').toLowerCase();
+        const threadId = [senderId.toLowerCase(), targetLogin].sort().join('_');
+        await firebaseService.sendChatMessage(
+          senderId,
+          senderName,
+          senderAvatar,
+          inputText,
+          'direct',
+          threadId
+        );
+      } else {
+        await firebaseService.sendChatMessage(
+          senderId,
+          senderName,
+          senderAvatar,
+          inputText,
+          'channel',
+          activeTab
+        );
+      }
+      setInputText('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      addToast('error', 'Failed to send message. Please try again.');
+    }
   };
 
   const handleCreatePost = async (e: React.FormEvent) => {
@@ -267,12 +337,21 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
     }
   };
 
-  const filteredMessages = messages.filter(m => m.channelId === activeTab);
   const filteredDiscussions = discussions.filter(d =>
     (forumCategory === 'all' || d.category === forumCategory) &&
     (d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       d.content.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const filteredStudents = students.filter(student => {
+    const activeUser = getActiveUser();
+    const isSelf = activeUser && student.login?.toLowerCase() === activeUser.login?.toLowerCase();
+    if (isSelf) return false;
+
+    return (student.name || '').toLowerCase().includes(searchDMQuery.toLowerCase()) ||
+      (student.login || '').toLowerCase().includes(searchDMQuery.toLowerCase()) ||
+      (student.branch || '').toLowerCase().includes(searchDMQuery.toLowerCase());
+  });
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-[#1e1f22] text-slate-900 dark:text-[#dbdee1] overflow-hidden">
@@ -361,28 +440,70 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
                     ))}
                   </div>
                 </section>
+
+                <section>
+                  <div className="px-2 mb-3 flex justify-between items-center group">
+                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] px-1">Direct Messages</span>
+                  </div>
+                  <div className="relative mb-3 px-2">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search students..."
+                      value={searchDMQuery}
+                      onChange={(e) => setSearchDMQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                    {filteredStudents.map(student => {
+                      const isSelected = activeTab === `dm_${student.login.toLowerCase()}`;
+                      const online = isOnline(student.last_active_at);
+                      return (
+                        <button
+                          key={student.login}
+                          onClick={() => {
+                            setActiveTab(`dm_${student.login.toLowerCase()}`);
+                            setIsMobileSidebarOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all group ${isSelected
+                            ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white'
+                            : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                            }`}
+                        >
+                          <div className="relative shrink-0">
+                            <img src={optimizeImage(student.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${student.name}`, { width: 48 })} className="w-6 h-6 rounded-full" alt="" />
+                            <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white dark:border-zinc-800 ${online ? 'bg-green-500' : 'bg-slate-300 dark:bg-zinc-600'}`} />
+                          </div>
+                          <span className="truncate flex-1 text-left">{student.name}</span>
+                          <span className="text-[9px] text-slate-400 uppercase font-black shrink-0">{student.branch?.split(' • ')[1] || 'General'}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
               </div>
 
               <div className="p-4 border-t border-black/5 dark:border-white/5 mt-auto">
                 <div className="bg-slate-50 dark:bg-black/20 p-3 rounded-2xl flex items-center gap-3">
-                  <div className="relative">
+                  <div className="relative shrink-0">
                     <img
-                      src={"https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky"}
+                      src={currentUser?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky"}
                       className="w-10 h-10 rounded-full"
                       alt="user"
                     />
                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-zinc-800" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-black truncate text-slate-950 dark:text-white">Anonymous Student</p>
-                    <p className="text-[10px] text-slate-500">Contributor</p>
+                    <p className="text-xs font-black truncate text-slate-950 dark:text-white">{currentUser?.name || 'Anonymous Student'}</p>
+                    <p className="text-[10px] text-slate-500">{currentUser?.branch || 'Campus Contributor'}</p>
                   </div>
                 </div>
               </div>
             </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+          )}
+        </>
+      )}
 
       {/* Premium Sidebar (Desktop only) */}
       <aside className="w-72 bg-white/80 dark:bg-[#2b2d31]/90 backdrop-blur-xl flex flex-col border-r border-slate-200 dark:border-white/5 hidden md:flex z-30">
@@ -437,22 +558,64 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
               ))}
             </div>
           </section>
+
+          <section>
+            <div className="px-2 mb-3 flex justify-between items-center group">
+              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] px-1">Direct Messages</span>
+            </div>
+            <div className="relative mb-3 px-2">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search students..."
+                value={searchDMQuery}
+                onChange={(e) => setSearchDMQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+              {filteredStudents.map(student => {
+                const isSelected = activeTab === `dm_${student.login.toLowerCase()}`;
+                const online = isOnline(student.last_active_at);
+                return (
+                  <button
+                    key={student.login}
+                    onClick={() => setActiveTab(`dm_${student.login.toLowerCase()}`)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all group ${isSelected
+                      ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white'
+                      : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                      }`}
+                  >
+                    <div className="relative shrink-0">
+                      <img src={optimizeImage(student.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${student.name}`, { width: 48 })} className="w-6 h-6 rounded-full" alt="" />
+                      <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white dark:border-zinc-800 ${online ? 'bg-green-500' : 'bg-slate-300 dark:bg-zinc-600'}`} />
+                    </div>
+                    <span className="truncate flex-1 text-left">{student.name}</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black shrink-0">{student.branch?.split(' • ')[1] || 'General'}</span>
+                  </button>
+                );
+              })}
+              {filteredStudents.length === 0 && (
+                <p className="text-[10px] text-slate-500 text-center py-4">No students found.</p>
+              )}
+            </div>
+          </section>
         </div>
 
         {/* User Footer */}
         <div className="p-4 border-t border-black/5 dark:border-white/5 mt-auto">
           <div className="bg-slate-50 dark:bg-black/20 p-3 rounded-2xl flex items-center gap-3">
-            <div className="relative">
+            <div className="relative shrink-0">
               <img
-                src={"https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky"}
+                src={currentUser?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky"}
                 className="w-10 h-10 rounded-full"
                 alt="user"
               />
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-zinc-800" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-black truncate">Anonymous Student</p>
-              <p className="text-[10px] text-slate-500">Contributor</p>
+              <p className="text-xs font-black truncate">{currentUser?.name || 'Anonymous Student'}</p>
+              <p className="text-[10px] text-slate-500">{currentUser?.branch || 'Campus Contributor'}</p>
             </div>
           </div>
         </div>
@@ -558,9 +721,9 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
-              className="flex-1 flex flex-col"
+              className="flex-1 flex flex-col h-full overflow-hidden"
             >
-              <header className="h-16 border-b border-black/5 dark:border-white/5 flex items-center px-4 sm:px-8 bg-white/50 dark:bg-[#313338]/50 backdrop-blur-md">
+              <header className="h-16 border-b border-black/5 dark:border-white/5 flex items-center px-4 sm:px-8 bg-white/50 dark:bg-[#313338]/50 backdrop-blur-md shrink-0">
                 <button
                   onClick={() => setIsMobileSidebarOpen(true)}
                   className="p-2 mr-1 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl md:hidden text-slate-600 dark:text-slate-300"
@@ -568,44 +731,91 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
                 >
                   <Filter className="w-5 h-5" />
                 </button>
-                <Hash className="w-6 h-6 mr-3 text-indigo-600 flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <h3 className="font-extrabold truncate">{activeChannel?.name}</h3>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-widest truncate">{activeChannel?.description}</span>
-                </div>
+                {isDM ? (
+                  <>
+                    <div className="relative shrink-0 mr-3">
+                      <img src={optimizeImage(activeDMUser?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${activeDMUser?.name || 'User'}`, { width: 96 })} className="w-10 h-10 rounded-full" alt="" />
+                      <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-zinc-800 ${isOnline(activeDMUser?.last_active_at) ? 'bg-green-500' : 'bg-slate-300 dark:bg-zinc-600'}`} />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <h3 className="font-extrabold truncate">{activeDMUser?.name || 'Direct Message'}</h3>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-widest truncate">{activeDMUser?.branch || 'Campus Contributor'}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Hash className="w-6 h-6 mr-3 text-indigo-600 flex-shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                      <h3 className="font-extrabold truncate">{activeChannel?.name}</h3>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-widest truncate">{activeChannel?.description}</span>
+                    </div>
+                  </>
+                )}
               </header>
 
-              <div className="flex-1 p-8 overflow-y-auto space-y-6 custom-scrollbar">
-                {filteredMessages.map(msg => (
-                  <div key={msg.id} className="flex gap-4 group">
-                    <img src={optimizeImage(msg.avatar, { width: 40 })} className="w-10 h-10 rounded-full group-hover:scale-105 transition-transform" alt="" loading="lazy" decoding="async" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">{msg.sender}</span>
-                        <span className="text-[10px] text-slate-400 font-bold">{msg.timestamp}</span>
-                      </div>
-                      <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">{msg.content}</p>
-                    </div>
+              {isDM && !currentUser ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-black/10 overflow-y-auto">
+                  <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-500/10 rounded-full flex items-center justify-center mb-6">
+                    <MessageSquare className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
                   </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Direct Messaging Locked</h3>
+                  <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-6 leading-relaxed">
+                    Sign in with Google to start secure private direct messages with other campus members!
+                  </p>
+                </div>
+              ) : (
+                <div className="flex-1 p-8 overflow-y-auto space-y-6 custom-scrollbar bg-slate-50/50 dark:bg-[#313338]">
+                  {messages.map(msg => {
+                    const isOwnMessage = currentUser && msg.sender_id.toLowerCase() === currentUser.login?.toLowerCase();
+                    return (
+                      <div key={msg.id} className={`flex gap-4 group ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
+                        <img src={optimizeImage(msg.sender_avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${msg.sender_name}`, { width: 40 })} className="w-10 h-10 rounded-full shrink-0 group-hover:scale-105 transition-transform" alt="" loading="lazy" decoding="async" />
+                        <div className={`flex flex-col min-w-0 max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">{msg.sender_name}</span>
+                            <span className="text-[9px] text-slate-400 font-bold">
+                              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <div className={`p-3 rounded-2xl text-sm leading-relaxed ${isOwnMessage ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-100 dark:bg-[#2b2d31] text-slate-800 dark:text-slate-200 rounded-tl-none border border-transparent dark:border-white/5'}`}>
+                            {msg.content}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {messages.length === 0 && (
+                    <div className="text-center py-20 text-slate-400 dark:text-slate-600 flex flex-col items-center justify-center">
+                      <MessageSquare className="w-12 h-12 mb-2" />
+                      <p className="text-sm font-semibold">No messages yet</p>
+                      <p className="text-xs">Type below to start the conversation!</p>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
 
-              <div className="p-6">
-                <form
-                  onSubmit={handleSendMessage}
-                  className="bg-slate-100 dark:bg-black/20 rounded-3xl p-3 flex items-center gap-4 border border-transparent dark:border-white/5 group focus-within:border-indigo-600/50 transition-all shadow-lg dark:shadow-none"
-                >
-                  <button type="button" className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><PlusCircle className="w-6 h-6" /></button>
-                  <input
-                    type="text"
-                    placeholder={`Write something to #${activeChannel?.name}...`}
-                    className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium"
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                  />
-                  <button type="submit" className="bg-indigo-600 p-3 rounded-2xl text-white shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95 transition-all"><Send className="w-5 h-5" /></button>
-                </form>
+              <div className="p-6 shrink-0 bg-white dark:bg-[#313338] border-t border-black/5 dark:border-white/5">
+                {currentUser ? (
+                  <form
+                    onSubmit={handleSendMessage}
+                    className="bg-slate-100 dark:bg-black/20 rounded-3xl p-3 flex items-center gap-4 border border-transparent dark:border-white/5 group focus-within:border-indigo-600/50 transition-all shadow-lg dark:shadow-none"
+                  >
+                    <button type="button" className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><PlusCircle className="w-6 h-6" /></button>
+                    <input
+                      type="text"
+                      placeholder={isDM ? `Send a DM to @${activeDMUser?.login || 'User'}...` : `Write something to #${activeChannel?.name}...`}
+                      className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium outline-none text-slate-900 dark:text-white"
+                      value={inputText}
+                      onChange={(e) => setInputText(e.target.value)}
+                    />
+                    <button type="submit" className="bg-indigo-600 p-3 rounded-2xl text-white shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95 transition-all"><Send className="w-5 h-5" /></button>
+                  </form>
+                ) : (
+                  <div className="bg-slate-100 dark:bg-black/20 rounded-3xl p-4 text-center border border-dashed border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-500">
+                    Sign in with Google to participate in campus chats.
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
