@@ -269,6 +269,7 @@ const App = () => {
         />} />
         <Route path="/community" element={<Community
           addToast={addToast}
+          currentUser={user}
         />} />
         <Route path="/events" element={<Events />} />
         <Route path="/projects/*" element={<Projects

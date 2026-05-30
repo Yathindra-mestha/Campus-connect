@@ -96,9 +96,10 @@ interface CommunityProps {
   autoOpenNewPost?: boolean;
   onNewPostHandled?: () => void;
   addToast: (type: 'success' | 'error' | 'info', message: string, duration?: number) => void;
+  currentUser?: any;
 }
 
-const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled, addToast }) => {
+const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled, addToast, currentUser: propCurrentUser }) => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('forums');
   const [forumCategory, setForumCategory] = useState('all');
@@ -138,7 +139,7 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
     return null;
   };
 
-  const currentUser = getActiveUser();
+  const currentUser = propCurrentUser || getActiveUser();
 
   const isOnline = (lastActive?: string) => {
     if (!lastActive) return false;
@@ -500,7 +501,9 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-zinc-800" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-black truncate text-slate-950 dark:text-white">{currentUser?.name || 'Anonymous Student'}</p>
+                    <p className="text-xs font-black truncate text-slate-950 dark:text-white">
+                      {currentUser ? `@${currentUser.login || currentUser.id || currentUser.email.split('@')[0]}` : 'Anonymous Student'}
+                    </p>
                     <p className="text-[10px] text-slate-500">{currentUser?.branch || 'Campus Contributor'}</p>
                   </div>
                 </div>
@@ -619,7 +622,9 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-zinc-800" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-black truncate">{currentUser?.name || 'Anonymous Student'}</p>
+              <p className="text-xs font-black truncate">
+                {currentUser ? `@${currentUser.login || currentUser.id || currentUser.email.split('@')[0]}` : 'Anonymous Student'}
+              </p>
               <p className="text-[10px] text-slate-500">{currentUser?.branch || 'Campus Contributor'}</p>
             </div>
           </div>
@@ -775,7 +780,11 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
               ) : (
                 <div className="flex-1 p-8 overflow-y-auto space-y-6 custom-scrollbar bg-slate-50/50 dark:bg-[#313338]">
                   {messages.map(msg => {
-                    const isOwnMessage = currentUser && msg.sender_id.toLowerCase() === currentUser.login?.toLowerCase();
+                    const isOwnMessage = currentUser && (
+                      msg.sender_id.toLowerCase() === currentUser.login?.toLowerCase() ||
+                      msg.sender_id.toLowerCase() === currentUser.id?.toLowerCase() ||
+                      msg.sender_id.toLowerCase() === currentUser.email?.split('@')[0].toLowerCase()
+                    );
                     return (
                       <div key={msg.id} className={`flex gap-4 group ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
                         <img src={optimizeImage(msg.sender_avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${msg.sender_name}`, { width: 40 })} className="w-10 h-10 rounded-full shrink-0 group-hover:scale-105 transition-transform" alt="" loading="lazy" decoding="async" />
