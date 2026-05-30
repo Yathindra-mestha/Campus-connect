@@ -346,18 +346,30 @@ const App = () => {
 
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center justify-center space-x-8">
-                {['home', 'community', 'events', 'projects', 'leaderboard', 'about'].map((section) => (
+                {['home', 'community', 'events', 'projects', 'leaderboard', 'members', 'about'].map((section) => (
                   <button
                     key={section}
                     onClick={() => handleNavigate(section)}
                     className={`text-sm font-medium transition-colors capitalize ${activeSection === section ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
                   >
-                    {section}
+                    {section === 'members' ? 'Members' : section}
                   </button>
                 ))}
               </div>
 
               <div className="flex-1 flex items-center justify-end gap-4">
+                {/* Search Bar */}
+                <div className="hidden md:flex relative mr-2">
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Search campus..."
+                    onClick={() => setIsSearchOpen(true)}
+                    readOnly
+                    className="pl-9 pr-4 py-1.5 w-40 hover:w-48 focus:w-48 bg-slate-100 dark:bg-zinc-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none transition-all cursor-pointer"
+                  />
+                </div>
+
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
                   className="p-2 mr-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"

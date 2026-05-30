@@ -154,90 +154,98 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, setActiv
                             ) : (
                                 <div className="space-y-6 p-4">
                                     {/* People Section */}
-                                    {(activeTab === 'all' || activeTab === 'people') && filteredPeople.length > 0 && (
-                                        <section>
-                                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-2 flex items-center justify-between">
-                                                {query ? `Directory (${filteredPeople.length})` : 'Featured Members'}
-                                                <User className="w-3 h-3" />
-                                            </h3>
-                                            <div className="space-y-1">
-                                                {filteredPeople.map((person) => (
-                                                    <button
-                                                        key={person.login}
-                                                        onClick={() => handleUserClick(person)}
-                                                        className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all group text-left"
-                                                    >
-                                                        <div className="relative shrink-0">
-                                                            <img src={optimizeImage(person.avatar_url, { width: 96 })} className={`w-12 h-12 rounded-xl shadow-sm ${isOnline(person.last_active_at) ? 'ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-900' : ''}`} alt="" loading="lazy" decoding="async" />
-                                                            {isOnline(person.last_active_at) && (
-                                                                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full animate-pulse shadow-sm"></span>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <h4 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">{person.name}</h4>
-                                                            <p className="text-xs text-slate-500 dark:text-slate-500 truncate">{person.branch} • {person.points} Points</p>
-                                                        </div>
-                                                        <ArrowRight className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </section>
+                                    {(activeTab === 'all' || activeTab === 'people' || activeTab === 'online') && (
+                                        filteredPeople.length > 0 ? (
+                                            <section>
+                                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-2 flex items-center justify-between">
+                                                    {query ? `Directory (${filteredPeople.length})` : 'Featured Members'}
+                                                    <User className="w-3 h-3" />
+                                                </h3>
+                                                <div className="space-y-1">
+                                                    {filteredPeople.map((person) => (
+                                                        <button
+                                                            key={person.login}
+                                                            onClick={() => handleUserClick(person)}
+                                                            className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all group text-left"
+                                                        >
+                                                            <div className="relative shrink-0">
+                                                                <img src={optimizeImage(person.avatar_url, { width: 96 })} className={`w-12 h-12 rounded-xl shadow-sm ${isOnline(person.last_active_at) ? 'ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-900' : ''}`} alt="" loading="lazy" decoding="async" />
+                                                                {isOnline(person.last_active_at) && (
+                                                                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full animate-pulse shadow-sm"></span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">{person.name}</h4>
+                                                                <p className="text-xs text-slate-500 dark:text-slate-500 truncate">{person.branch} • {person.points} Points</p>
+                                                            </div>
+                                                            <ArrowRight className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </section>
+                                        ) : (
+                                            query && (
+                                                <section>
+                                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-2 flex items-center justify-between">
+                                                        Directory (0)
+                                                        <User className="w-3 h-3" />
+                                                    </h3>
+                                                    <div className="py-8 text-center bg-slate-50/50 dark:bg-white/[0.01] rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
+                                                        <User className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">No user is available</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400">Try adjusting your search terms.</p>
+                                                    </div>
+                                                </section>
+                                            )
+                                        )
                                     )}
 
                                     {/* Projects Section */}
-                                    {(activeTab === 'all' || activeTab === 'projects') && filteredProjects.length > 0 && (
-                                        <section>
-                                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-2 flex items-center justify-between">
-                                                Projects {query ? `(${filteredProjects.length})` : 'Recent'}
-                                                <BookOpen className="w-3 h-3" />
-                                            </h3>
-                                            <div className="space-y-1">
-                                                {filteredProjects.map((project, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        onClick={() => project.slug && handleProjectClick(project.slug)}
-                                                        className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all group text-left"
-                                                    >
-                                                        <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center overflow-hidden shrink-0">
-                                                            {project.image ? (
-                                                                <img src={optimizeImage(project.image, { width: 96 })} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async" />
-                                                            ) : (
-                                                                <BookOpen className="w-5 h-5 text-slate-400" />
-                                                            )}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <h4 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">{project.title}</h4>
-                                                            <p className="text-xs text-slate-500 dark:text-slate-500 truncate">by {project.author} • {project.branch}</p>
-                                                        </div>
-                                                        <ArrowRight className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </section>
-                                    )}
-
-                                    {/* Tab-Specific and Global Empty Results States */}
-                                    {query && (
-                                        (activeTab === 'all' && filteredPeople.length === 0 && filteredProjects.length === 0) ||
-                                        ((activeTab === 'people' || activeTab === 'online') && filteredPeople.length === 0)
-                                    ) && (
-                                        <div className="py-12 text-center">
-                                            <div className="w-16 h-16 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                <User className="w-8 h-8 text-slate-300 dark:text-slate-600" />
-                                            </div>
-                                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">No user is available</h4>
-                                            <p className="text-slate-500 text-sm">We couldn't find any campus members matching your query.</p>
-                                        </div>
-                                    )}
-
-                                    {query && activeTab === 'projects' && filteredProjects.length === 0 && (
-                                        <div className="py-12 text-center">
-                                            <div className="w-16 h-16 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                <BookOpen className="w-8 h-8 text-slate-300 dark:text-slate-600" />
-                                            </div>
-                                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">No projects found</h4>
-                                            <p className="text-slate-500 text-sm">Try searching for different project keywords or tags.</p>
-                                        </div>
+                                    {(activeTab === 'all' || activeTab === 'projects') && (
+                                        filteredProjects.length > 0 ? (
+                                            <section>
+                                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-2 flex items-center justify-between">
+                                                    Projects {query ? `(${filteredProjects.length})` : 'Recent'}
+                                                    <BookOpen className="w-3 h-3" />
+                                                </h3>
+                                                <div className="space-y-1">
+                                                    {filteredProjects.map((project, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={() => project.slug && handleProjectClick(project.slug)}
+                                                            className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all group text-left"
+                                                        >
+                                                            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center overflow-hidden shrink-0">
+                                                                {project.image ? (
+                                                                    <img src={optimizeImage(project.image, { width: 96 })} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async" />
+                                                                ) : (
+                                                                    <BookOpen className="w-5 h-5 text-slate-400" />
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">{project.title}</h4>
+                                                                <p className="text-xs text-slate-500 dark:text-slate-500 truncate">by {project.author} • {project.branch}</p>
+                                                            </div>
+                                                            <ArrowRight className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </section>
+                                        ) : (
+                                            query && activeTab !== 'online' && (
+                                                <section>
+                                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-2 flex items-center justify-between">
+                                                        Projects (0)
+                                                        <BookOpen className="w-3 h-3" />
+                                                    </h3>
+                                                    <div className="py-8 text-center bg-slate-50/50 dark:bg-white/[0.01] rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
+                                                        <BookOpen className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">No projects found</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400">Try searching for different project keywords.</p>
+                                                    </div>
+                                                </section>
+                                            )
+                                        )
                                     )}
 
                                     {!query && (
