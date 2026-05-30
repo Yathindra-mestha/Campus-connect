@@ -216,13 +216,27 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, setActiv
                                         </section>
                                     )}
 
-                                    {query && filteredPeople.length === 0 && filteredProjects.length === 0 && (
+                                    {/* Tab-Specific and Global Empty Results States */}
+                                    {query && (
+                                        (activeTab === 'all' && filteredPeople.length === 0 && filteredProjects.length === 0) ||
+                                        ((activeTab === 'people' || activeTab === 'online') && filteredPeople.length === 0)
+                                    ) && (
                                         <div className="py-12 text-center">
                                             <div className="w-16 h-16 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                <Search className="w-8 h-8 text-slate-300" />
+                                                <User className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                                             </div>
-                                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">No matches found</h4>
-                                            <p className="text-slate-500 text-sm">Try searching for different keywords or domains.</p>
+                                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">No user is available</h4>
+                                            <p className="text-slate-500 text-sm">We couldn't find any campus members matching your query.</p>
+                                        </div>
+                                    )}
+
+                                    {query && activeTab === 'projects' && filteredProjects.length === 0 && (
+                                        <div className="py-12 text-center">
+                                            <div className="w-16 h-16 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <BookOpen className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                                            </div>
+                                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">No projects found</h4>
+                                            <p className="text-slate-500 text-sm">Try searching for different project keywords or tags.</p>
                                         </div>
                                     )}
 
