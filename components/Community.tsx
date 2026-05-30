@@ -283,6 +283,7 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
           'channel',
           activeTab
         );
+      }
       setInputText('');
       scrollToBottom();
       setTimeout(scrollToBottom, 50);
