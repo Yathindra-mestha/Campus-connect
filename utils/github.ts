@@ -77,16 +77,51 @@ export const githubService = {
 
     async getSystemStats() {
         try {
-            const res = await fetch('/data/stats.json');
-            if (!res.ok) throw new Error('Failed to fetch stats data');
-            return await res.json();
-        } catch (error) {
-            console.error('Error fetching stats:', error);
+            // 1. Fetch real students count from Firestore
+            const usersSnapshot = await getDocs(collection(db, 'users'));
+            const students = usersSnapshot.size;
+
+            // 2. Fetch real projects count from Firestore (excluding stock projects)
+            const projectsSnapshot = await getDocs(collection(db, 'projects'));
+            const stockIds = [
+                'Yathindra-mestha-aerospace.md',
+                'Yathindra-mestha-codecraft.md',
+                'Yathindra-mestha-ecotrack.md',
+                'Yathindra-mestha-nexus-ai.md'
+            ];
+            const projects = projectsSnapshot.docs.filter(doc => !stockIds.includes(doc.id)).length;
+
+            // 3. Fetch real events count from events.json
+            let events = 0;
+            try {
+                const eventsList = await this.getEvents();
+                events = eventsList.length;
+            } catch (e) {
+                console.error('Failed to get events for stats:', e);
+            }
+
+            // 4. Fetch active contributors count from leaderboard
+            let contributors = 0;
+            try {
+                const leaderboard = await this.getLeaderboard();
+                contributors = leaderboard.length;
+            } catch (e) {
+                console.error('Failed to get leaderboard for stats:', e);
+            }
+
             return {
-                students: 2500,
-                projects: 450,
-                events: 120,
-                contributors: 850
+                students,
+                projects,
+                events,
+                contributors
+            };
+        } catch (error) {
+            console.error('Error fetching system stats from Firestore:', error);
+            return {
+                students: 0,
+                projects: 0,
+                events: 0,
+                contributors: 0
             };
         }
     },
