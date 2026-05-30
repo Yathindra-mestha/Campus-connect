@@ -117,6 +117,7 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
   const [inputText, setInputText] = useState('');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const activeChannel = CHANNELS.find(c => c.id === activeTab);
   const isDM = activeTab.startsWith('dm_');
@@ -231,7 +232,12 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
   }, [activeTab]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   };
 
   useEffect(() => {
@@ -780,7 +786,7 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
                   </p>
                 </div>
               ) : (
-                <div className="flex-1 p-8 overflow-y-auto space-y-6 custom-scrollbar bg-slate-50/50 dark:bg-[#313338]">
+                <div ref={messagesContainerRef} className="flex-1 p-8 overflow-y-auto space-y-6 custom-scrollbar bg-slate-50/50 dark:bg-[#313338]">
                   {messages.map(msg => {
                     const isOwnMessage = currentUser && (
                       msg.sender_id.toLowerCase() === currentUser.login?.toLowerCase() ||
