@@ -199,13 +199,18 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
   useEffect(() => {
     if (activeTab === 'forums') return;
 
+    const activeUser = getActiveUser();
+    if (!activeUser) {
+      setMessages([]);
+      return;
+    }
+
     let unsubscribe: () => void;
 
     if (activeTab.startsWith('dm_')) {
       const targetLogin = activeTab.replace('dm_', '').toLowerCase();
-      const activeUser = getActiveUser();
       
-      if (activeUser && activeUser.login) {
+      if (activeUser.login) {
         const threadId = [activeUser.login.toLowerCase(), targetLogin].sort().join('_');
         unsubscribe = firebaseService.subscribeToMessages('direct', threadId, (newMsgs) => {
           setMessages(newMsgs);
@@ -753,14 +758,18 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
                 )}
               </header>
 
-              {isDM && !currentUser ? (
+              {!currentUser ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-black/10 overflow-y-auto">
                   <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-500/10 rounded-full flex items-center justify-center mb-6">
                     <MessageSquare className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Direct Messaging Locked</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                    {isDM ? 'Direct Messaging Locked' : 'Community Chat Locked'}
+                  </h3>
                   <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-6 leading-relaxed">
-                    Sign in with Google to start secure private direct messages with other campus members!
+                    {isDM
+                      ? 'Sign in with Google to start secure private direct messages with other campus members!'
+                      : 'Sign in with Google to view and participate in campus global chats and department channels!'}
                   </p>
                 </div>
               ) : (
