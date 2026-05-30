@@ -206,7 +206,7 @@ const Community: React.FC<CommunityProps> = ({ autoOpenNewPost, onNewPostHandled
       return;
     }
 
-    let unsubscribe: () => void;
+    let unsubscribe: (() => void) | undefined = undefined;
 
     if (activeTab.startsWith('dm_')) {
       const targetLogin = activeTab.replace('dm_', '').toLowerCase();
