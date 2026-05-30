@@ -17,6 +17,9 @@ const isFirebaseAvailable = (): boolean => {
     return typeof window !== 'undefined' && !!import.meta.env.VITE_FIREBASE_API_KEY;
 };
 
+// Global flag to track whether to use Firestore. Will heal/fallback at runtime if Firestore fails.
+let useFirestore = isFirebaseAvailable();
+
 // Seed chat conversations to populate UI out-of-the-box
 const SEED_MESSAGES: ChatMessage[] = [
     {
@@ -71,7 +74,7 @@ const saveLocalChats = (chats: ChatMessage[]) => {
 
 export const firebaseService = {
     /**
-     * Sends a chat message to Firestore (or LocalStorage fallback).
+     * Sends a chat message. Automatically falls back to LocalStorage if Firestore throws any write error.
      */
     async sendChatMessage(
         senderId: string,
@@ -86,7 +89,7 @@ export const firebaseService = {
         const senderIdLower = senderId.toLowerCase();
         const finalAvatar = senderAvatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(senderName)}`;
 
-        if (isFirebaseAvailable()) {
+        if (useFirestore) {
             try {
                 await addDoc(collection(db, 'chats'), {
                     sender_id: senderIdLower,
@@ -97,31 +100,34 @@ export const firebaseService = {
                     type,
                     target: targetLower
                 });
+                return; // Success!
             } catch (error) {
-                console.error('Failed to send chat message to Firestore:', error);
-                throw error;
+                console.error('Firestore write failed, falling back to LocalStorage engine:', error);
+                useFirestore = false; // Disable Firestore for this session
+                // Dispatch event to force all active subscription streams to fallback to LocalStorage
+                window.dispatchEvent(new CustomEvent('campusconnect_chat_service_fallback'));
             }
-        } else {
-            // LocalStorage fallback sync engine
-            const allChats = getLocalChats();
-            const newMessage: ChatMessage = {
-                id: `local-msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                sender_id: senderIdLower,
-                sender_name: senderName,
-                sender_avatar: finalAvatar,
-                content: content.trim(),
-                timestamp: new Date().toISOString(),
-                type,
-                target: targetLower
-            };
-            allChats.push(newMessage);
-            saveLocalChats(allChats);
         }
+
+        // LocalStorage fallback sync engine
+        const allChats = getLocalChats();
+        const newMessage: ChatMessage = {
+            id: `local-msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            sender_id: senderIdLower,
+            sender_name: senderName,
+            sender_avatar: finalAvatar,
+            content: content.trim(),
+            timestamp: new Date().toISOString(),
+            type,
+            target: targetLower
+        };
+        allChats.push(newMessage);
+        saveLocalChats(allChats);
     },
 
     /**
      * Subscribes to real-time updates for channel or DM messages.
-     * Returns an unsubscribe function.
+     * Automatically handles dynamic runtime fallback if Firestore fails.
      */
     subscribeToMessages(
         type: 'channel' | 'direct',
@@ -129,35 +135,55 @@ export const firebaseService = {
         callback: (messages: ChatMessage[]) => void
     ): () => void {
         const targetLower = target.toLowerCase();
+        let activeUnsubscribe: (() => void) | null = null;
+        let isUnsubscribed = false;
 
-        if (isFirebaseAvailable()) {
-            const q = query(
-                collection(db, 'chats'),
-                where('type', '==', type),
-                where('target', '==', targetLower),
-                orderBy('timestamp', 'asc')
-            );
+        const startSubscription = () => {
+            if (isUnsubscribed) return;
 
-            return onSnapshot(q, (snapshot) => {
-                const messages = snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        sender_id: data.sender_id || '',
-                        sender_name: data.sender_name || 'Anonymous Student',
-                        sender_avatar: data.sender_avatar || '',
-                        content: data.content || '',
-                        timestamp: data.timestamp || new Date().toISOString(),
-                        type: data.type || 'channel',
-                        target: data.target || ''
-                    } as ChatMessage;
-                });
-                callback(messages);
-            }, (error) => {
-                console.error(`Error in Firestore subscription for target ${targetLower}:`, error);
-            });
-        } else {
-            // LocalStorage real-time tab synchronizer
+            if (useFirestore) {
+                try {
+                    const q = query(
+                        collection(db, 'chats'),
+                        where('type', '==', type),
+                        where('target', '==', targetLower),
+                        orderBy('timestamp', 'asc')
+                    );
+
+                    activeUnsubscribe = onSnapshot(q, (snapshot) => {
+                        const messages = snapshot.docs.map(doc => {
+                            const data = doc.data();
+                            return {
+                                id: doc.id,
+                                sender_id: data.sender_id || '',
+                                sender_name: data.sender_name || 'Anonymous Student',
+                                sender_avatar: data.sender_avatar || '',
+                                content: data.content || '',
+                                timestamp: data.timestamp || new Date().toISOString(),
+                                type: data.type || 'channel',
+                                target: data.target || ''
+                            } as ChatMessage;
+                        });
+                        callback(messages);
+                    }, (error) => {
+                        console.error(`Firestore subscription failed for ${targetLower}, falling back to LocalStorage:`, error);
+                        useFirestore = false;
+                        if (activeUnsubscribe) activeUnsubscribe();
+                        startLocalStorageSubscription();
+                    });
+                } catch (e) {
+                    console.error(`Firestore subscription startup failed for ${targetLower}, falling back to LocalStorage:`, e);
+                    useFirestore = false;
+                    startLocalStorageSubscription();
+                }
+            } else {
+                startLocalStorageSubscription();
+            }
+        };
+
+        const startLocalStorageSubscription = () => {
+            if (isUnsubscribed) return;
+
             const deliverLocalMessages = () => {
                 const allChats = getLocalChats();
                 const filtered = allChats.filter(msg => 
@@ -184,10 +210,26 @@ export const firebaseService = {
             window.addEventListener('storage', handleStorageChange);
             window.addEventListener('campusconnect_local_chat_update', handleLocalChange);
 
-            return () => {
+            activeUnsubscribe = () => {
                 window.removeEventListener('storage', handleStorageChange);
                 window.removeEventListener('campusconnect_local_chat_update', handleLocalChange);
             };
-        }
+        };
+
+        // Handler to trigger fallback across all active subscription instances
+        const handleFallbackTrigger = () => {
+            if (activeUnsubscribe) activeUnsubscribe();
+            startLocalStorageSubscription();
+        };
+
+        window.addEventListener('campusconnect_chat_service_fallback', handleFallbackTrigger);
+
+        startSubscription();
+
+        return () => {
+            isUnsubscribed = true;
+            window.removeEventListener('campusconnect_chat_service_fallback', handleFallbackTrigger);
+            if (activeUnsubscribe) activeUnsubscribe();
+        };
     }
 };
