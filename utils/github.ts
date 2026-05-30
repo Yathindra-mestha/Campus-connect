@@ -168,9 +168,15 @@ export const githubService = {
                 userProjectsMap.get(authorLogin)!.push(p);
             });
 
-            // 4. Build leaderboard entries
+            // 4. Gather all logins (registered users + project contributors)
+            const allLogins = new Set<string>();
+            userProjectsMap.forEach((_, login) => allLogins.add(login));
+            usersMap.forEach((_, login) => allLogins.add(login));
+
+            // 5. Build leaderboard entries
             const entries: any[] = [];
-            userProjectsMap.forEach((userProjs, authorLogin) => {
+            allLogins.forEach((authorLogin) => {
+                const userProjs = userProjectsMap.get(authorLogin) || [];
                 const latestProj = userProjs.sort((a, b) => {
                     const dateA = a.date ? new Date(a.date).getTime() : 0;
                     const dateB = b.date ? new Date(b.date).getTime() : 0;
@@ -179,12 +185,12 @@ export const githubService = {
 
                 const userProfile = usersMap.get(authorLogin) || {};
                 
-                const name = userProfile.name || latestProj.author || authorLogin;
-                const branch = userProfile.branch || latestProj.branch || 'General';
+                const name = userProfile.name || (latestProj ? latestProj.author : authorLogin);
+                const branch = userProfile.branch || (latestProj ? latestProj.branch : 'General');
                 const bio = userProfile.bio || '';
                 const location = userProfile.location || '';
                 const avatar_url = userProfile.avatar_url || `https://github.com/${authorLogin}.png`;
-                const last_active_at = userProfile.last_active_at || latestProj.date || new Date().toISOString();
+                const last_active_at = userProfile.last_active_at || (latestProj ? latestProj.date : new Date().toISOString());
 
                 // Calculate profile completeness (up to 4 fields)
                 let profileCompleteness = 0;
