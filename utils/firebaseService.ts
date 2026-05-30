@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 
 export interface ChatMessage {
@@ -143,11 +143,11 @@ export const firebaseService = {
 
             if (useFirestore) {
                 try {
+                    // Query without orderBy to completely avoid requiring custom composite indexes
                     const q = query(
                         collection(db, 'chats'),
                         where('type', '==', type),
-                        where('target', '==', targetLower),
-                        orderBy('timestamp', 'asc')
+                        where('target', '==', targetLower)
                     );
 
                     activeUnsubscribe = onSnapshot(q, (snapshot) => {
@@ -164,7 +164,13 @@ export const firebaseService = {
                                 target: data.target || ''
                             } as ChatMessage;
                         });
-                        callback(messages);
+                        
+                        // Sort messages client-side by timestamp to support clean chronological feeds out-of-the-box
+                        const sorted = messages.sort((a, b) => 
+                            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+                        );
+                        
+                        callback(sorted);
                     }, (error) => {
                         console.error(`Firestore subscription failed for ${targetLower}, falling back to LocalStorage:`, error);
                         useFirestore = false;
